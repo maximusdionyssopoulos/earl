@@ -8,14 +8,43 @@ import cfe "cf-extensions"
 AXUIElementRef :: cf.TypeRef
 
 
+AXError :: enum i32 {
+	kAXErrorSuccess                           = 0,
+	kAXErrorAttributeUnsupported              = -25025,
+	kAXErrorIllegalArgument                   = -25201,
+	kAXErrorInvalidUIElement                  = -25202,
+	kAXErrorCannotComplete                    = -250204,
+	kAXErrorNotImplemented                    = -25208,
+	kAXErrorNoValue                           = -25212,
+	kAXErrorAPIDisabled                       = -25211,
+	kAXErrorActionUnsupported                 = -25206,
+	kAXErrorFailure                           = -25200,
+	kAXErrorInvalidUIElementObserver          = -25203,
+	kAXErrorNotEnoughPrecision                = -25214,
+	kAXErrorNotificationAlreadyRegistered     = -25209,
+	kAXErrorNotificationNotRegistered         = -25210,
+	kAXErrorNotificationUnsupported           = -25207,
+	kAXErrorParameterizedAttributeUnsupported = -25213,
+}
+
 @(default_calling_convention = "c", link_prefix = "AX")
 foreign AX {
 	IsProcessTrusted :: proc() -> bool ---
 	UIElementCreateSystemWide :: proc() -> AXUIElementRef ---
 	UIElementCreateApplication :: proc(pid: i32) -> AXUIElementRef ---
+	UIElementCopyAttributeValue :: proc(element: AXUIElementRef, attribute: cf.String, value: cf.TypeRef) -> AXError ---
+	UIElementSetAttributeValue :: proc(element: AXUIElementRef, attribute: cf.String, value: Maybe(cf.TypeRef)) -> AXError ---
 }
 
-GetCurrentAXUIElements :: proc(
+@(default_calling_convention = "c", link_prefix = "kAX")
+foreign AX {
+	PositionAttribure: cf.String
+	SizeAttribute: cf.String
+	FocusedAttribute: cf.String
+	WindowsAttibute: cf.String
+}
+
+GetCurrentWindowAXUIElements :: proc(
 	allocator := context.allocator,
 ) -> (
 	arr: [dynamic]AXUIElementRef,
@@ -46,7 +75,15 @@ GetCurrentAXUIElements :: proc(
 
 			processed_pids[pid] = true
 
-			append(&ax_ui_elements, UIElementCreateApplication(pid))
+			appAxUIEl := UIElementCreateApplication(pid)
+
+			windowAxUIElements: cfe.Array
+			if UIElementCopyAttributeValue(appAxUIEl, WindowsAttibute, windowAxUIElements) != AXError.kAXErrorSuccess do return
+
+			windowsCount := cfe.ArrayGetCount(windowAxUIElements)
+			for j in 0 ..< count {
+				append(&ax_ui_elements, cfe.ArrayGetValueAtIndex(windowAxUIElements, j))
+			}
 		}
 	}
 
