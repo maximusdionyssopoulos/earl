@@ -2,19 +2,14 @@ package earl
 import "tile"
 import "tile/ax"
 
-// useful link for the subtype polymorphism i'm using here
-// https://odin-lang.org/docs/overview/#advanced-idioms
-
 Layer :: union {
 	Window,
 	Split,
 }
 
-
 Window :: struct {
 	window_ref: ax.AXUIElementRef,
 }
-
 
 SplitType :: enum {
 	Horizontal,
@@ -23,9 +18,9 @@ SplitType :: enum {
 
 Split :: struct {
 	split_variant:     SplitType,
-	left_child:        Layer,
+	left_child:        ^Layer,
 	left_child_ratio:  f16,
-	right_child:       Layer,
+	right_child:       ^Layer,
 	right_child_ratio: f16,
 }
 
@@ -35,52 +30,53 @@ Node :: struct {
 	size_y: uint,
 }
 
-
 @(private = "file")
-render_layer :: proc(layer: ^Layer) {
-	max_x, max_y = tile.get_max_size()
-
-	// is implementation does introduce some overhead if only rendering a window - maybe try to remove this in the future
-	// a nicer approach could be a recursive approach but need to benchmark performance & memory consumption there - want this to be highly performant
-	nodes: [dynamic]Node
-	compute_layer_size(layer, max_x, max_y, &nodes)
-
-	for len(nodes) > 0 {
-		node := pop_front(&nodes)
-
-		switch node_layer in node.layer {
-		case Window:
-			tile.tile_window(node_layer.window_ref, node.size_x, node.size_y)
-		case Split:
-			compute_layer_size(node_layer, node.size_x, node.size_y, &nodes)
-		}
-	}
+render_window :: proc(window: ^Window, size_x: uint, size_y: uint, nodes: ^[dynamic]Node) -> bool {
+	return tile.tile_window(window.window_ref, size_x, size_y)
 }
 
 @(private = "file")
-compute_layer_size :: proc(
-	layer: ^Layer,
-	max_size_x: uint,
-	max_size_y: uint,
-	nodes: ^[dynamic]Node,
-) {
-	switch l in layer {
+render_split :: proc(split: ^Split, size_x: uint, size_y: uint, nodes: ^[dynamic]Node) -> bool {
+	lsize_x, lsize_y := compute_split_child_max_size(
+		split.split_variant,
+		size_x,
+		size_y,
+		split.left_child_ratio,
+	)
+	rsize_x, rsize_y := compute_split_child_max_size(
+		split.split_variant,
+		size_x,
+		size_y,
+		split.right_child_ratio,
+	)
+	append(
+		nodes,
+		Node{split.left_child, lsize_x, lsize_y},
+		Node{split.right_child, rsize_x, rsize_y},
+	)
+	return true
+}
+
+@(private = "file")
+render :: proc(layer: ^Layer, size_x: uint, size_y: uint, nodes: ^[dynamic]Node) {
+	switch &l in layer {
 	case Window:
-		append(&nodes, Node{^l, max_size_x, max_size_y})
+		render_window(&l, size_x, size_y, nodes)
 	case Split:
-		lsize_x, lsize_y := compute_split_child_max_size(
-			l.split_variant,
-			max_size_x,
-			max_size_y,
-			l.left_child_ratio,
-		)
-		rsize_x, rsize_y := compute_split_child_max_size(
-			l.split_variant,
-			max_size_x,
-			max_size_y,
-			l.right_child_ratio,
-		)
-		append(&nodes, Node{^l, lsize_x, lsize_y}, Node{^l, rsize_x, rsize_y})
+		render_split(&l, size_x, size_y, nodes)
+	}
+}
+
+render_layer :: proc(layer: ^Layer) {
+	nodes: [dynamic]Node
+	max_x, max_y := tile.get_max_size()
+	// this implementation does introduce some overhead if only rendering a window - maybe try to remove this in the future
+	// a nicer approach could be a recursive approach but need to benchmark performance & memory consumption there - want this to be highly performant
+	render(layer, max_x, max_y, &nodes)
+
+	for len(nodes) > 0 {
+		node := pop_front(&nodes)
+		render(node.layer, node.size_x, node.size_y, &nodes)
 	}
 }
 
