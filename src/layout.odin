@@ -1,6 +1,6 @@
 package earl
-import "tile"
-import "tile/ax"
+
+import "osx"
 
 Layer :: union {
 	Window,
@@ -8,7 +8,7 @@ Layer :: union {
 }
 
 Window :: struct {
-	window_ref: ax.AXUIElementRef,
+	window_ref: osx.AXUIElementRef,
 }
 
 SplitType :: enum {
@@ -17,81 +17,78 @@ SplitType :: enum {
 }
 
 Split :: struct {
-	split_variant:     SplitType,
-	left_child:        ^Layer,
-	left_child_ratio:  f16,
-	right_child:       ^Layer,
-	right_child_ratio: f16,
+	split_variant:    SplitType,
+	left_child:       ^Layer,
+	left_child_ratio: f64,
+	right_child:      ^Layer,
 }
 
 Node :: struct {
 	layer:  ^Layer,
-	size_x: uint,
-	size_y: uint,
+	vector: Vector2,
 }
 
 @(private = "file")
-render_window :: proc(window: ^Window, size_x: uint, size_y: uint, nodes: ^[dynamic]Node) -> bool {
-	return tile.tile_window(window.window_ref, size_x, size_y)
+render_window :: proc(
+	window: ^Window,
+	vector: Vector2,
+	nodes: ^[dynamic]Node,
+	tile_backed: ^TileBackend,
+) -> bool {
+	return tile_backed.tile_window(window.window_ref, vector)
 }
 
 @(private = "file")
-render_split :: proc(split: ^Split, size_x: uint, size_y: uint, nodes: ^[dynamic]Node) -> bool {
-	lsize_x, lsize_y := compute_split_child_max_size(
+render_split :: proc(split: ^Split, vector: Vector2, nodes: ^[dynamic]Node) -> bool {
+	lvector := compute_split_child_max_size(split.split_variant, vector, split.left_child_ratio)
+	rvector := compute_split_child_max_size(
 		split.split_variant,
-		size_x,
-		size_y,
-		split.left_child_ratio,
+		vector,
+		1 - split.left_child_ratio,
 	)
-	rsize_x, rsize_y := compute_split_child_max_size(
-		split.split_variant,
-		size_x,
-		size_y,
-		split.right_child_ratio,
-	)
-	append(
-		nodes,
-		Node{split.left_child, lsize_x, lsize_y},
-		Node{split.right_child, rsize_x, rsize_y},
-	)
+
+	append(nodes, Node{split.left_child, lvector}, Node{split.right_child, rvector})
 	return true
 }
 
 @(private = "file")
-render :: proc(layer: ^Layer, size_x: uint, size_y: uint, nodes: ^[dynamic]Node) {
+render :: proc(layer: ^Layer, vector: Vector2, nodes: ^[dynamic]Node, tile_backend: ^TileBackend) {
 	switch &l in layer {
 	case Window:
-		render_window(&l, size_x, size_y, nodes)
+		render_window(&l, vector, nodes, tile_backend)
 	case Split:
-		render_split(&l, size_x, size_y, nodes)
+		render_split(&l, vector, nodes)
 	}
 }
 
-render_layer :: proc(layer: ^Layer) {
+render_layer :: proc(layer: ^Layer, tile_backend: ^TileBackend) {
 	nodes: [dynamic]Node
-	max_x, max_y := tile.get_max_size()
-	// this implementation does introduce some overhead if only rendering a window - maybe try to remove this in the future
-	// a nicer approach could be a recursive approach but need to benchmark performance & memory consumption there - want this to be highly performant
-	render(layer, max_x, max_y, &nodes)
+	defer delete(nodes)
+
+	vector := tile_backend.get_max_size()
+
+	render(layer, vector, &nodes, tile_backend)
 
 	for len(nodes) > 0 {
 		node := pop_front(&nodes)
-		render(node.layer, node.size_x, node.size_y, &nodes)
+		render(node.layer, node.vector, &nodes, tile_backend)
 	}
 }
 
 @(private = "file")
 compute_split_child_max_size :: proc(
 	split_type: SplitType,
-	max_size_x: uint,
-	max_size_y: uint,
-	ratio: f16,
+	vector: Vector2,
+	ratio: f64,
 ) -> (
-	size_x: uint,
-	size_y: uint,
+	size: Vector2,
 ) {
-	size_x = 0
-	size_y = 0
+	switch split_type {
+	case .Vertical:
+		size = {vector.x * ratio, vector.y}
+	case .Horizontal:
+		size = {vector.x, vector.y * ratio}
+	}
 	return
 }
 
