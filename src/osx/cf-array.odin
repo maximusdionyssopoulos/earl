@@ -1,4 +1,4 @@
-package cf_extensions
+package osx
 
 foreign import CoreFoundation "system:CoreFoundation.framework"
 import cf "core:sys/darwin/CoreFoundation"

@@ -1,6 +1,5 @@
-package ax
+package osx
 
-import cfe "cf-extensions"
 import cf "core:sys/darwin/CoreFoundation"
 
 foreign import CoreFoundations "system:CoreGraphics.framework"
@@ -19,7 +18,7 @@ kCGNullWindowID :: WindowID(0)
 
 @(default_calling_convention = "c")
 foreign CoreFoundations {
-	CGWindowListCopyWindowInfo :: proc(option: WindowListOption, relativeToWindow: WindowID) -> cfe.Array ---
+	CGWindowListCopyWindowInfo :: proc(option: WindowListOption, relativeToWindow: WindowID) -> Array ---
 }
 
 @(default_calling_convention = "c")

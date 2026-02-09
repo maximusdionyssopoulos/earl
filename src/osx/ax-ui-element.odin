@@ -1,9 +1,8 @@
-package ax
+package osx
 
 import cf "core:sys/darwin/CoreFoundation"
 foreign import AX "system:ApplicationServices.framework"
 
-import cfe "cf-extensions"
 
 AXUIElementRef :: cf.TypeRef
 
@@ -58,7 +57,7 @@ GetCurrentWindowAXUIElements :: proc(
 	window_list := CGWindowListCopyWindowInfo(options, kCGNullWindowID)
 	defer cf.ReleaseObject(window_list)
 
-	count := cfe.ArrayGetCount(window_list)
+	count := ArrayGetCount(window_list)
 	processed_pids := make(map[i32]bool)
 	defer delete(processed_pids)
 
@@ -66,10 +65,10 @@ GetCurrentWindowAXUIElements :: proc(
 
 	for i in 0 ..< count {
 		{
-			dict := cfe.ArrayGetValueAtIndex(window_list, i)
+			dict := ArrayGetValueAtIndex(window_list, i)
 			// defer cf.ReleaseObject(dict)
 
-			pid := cfe.get_int_from_dict(dict, kCGWindowOwnerPID) or_continue
+			pid := get_int_from_dict(dict, kCGWindowOwnerPID) or_continue
 
 			if (pid in processed_pids) do continue
 
@@ -77,12 +76,12 @@ GetCurrentWindowAXUIElements :: proc(
 
 			appAxUIEl := UIElementCreateApplication(pid)
 
-			windowAxUIElements: cfe.Array
+			windowAxUIElements: Array
 			if UIElementCopyAttributeValue(appAxUIEl, WindowsAttibute, windowAxUIElements) != AXError.kAXErrorSuccess do return
 
-			windowsCount := cfe.ArrayGetCount(windowAxUIElements)
+			windowsCount := ArrayGetCount(windowAxUIElements)
 			for j in 0 ..< count {
-				append(&ax_ui_elements, cfe.ArrayGetValueAtIndex(windowAxUIElements, j))
+				append(&ax_ui_elements, ArrayGetValueAtIndex(windowAxUIElements, j))
 			}
 		}
 	}
