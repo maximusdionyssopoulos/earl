@@ -4,15 +4,24 @@ import cf "core:sys/darwin/CoreFoundation"
 foreign import AX "system:ApplicationServices.framework"
 
 
+TypeRef :: cf.TypeRef
 AXUIElementRef :: cf.TypeRef
+AXValue :: cf.TypeRef
+
+ReleaseObject :: cf.ReleaseObject
+CGPoint :: cf.CGPoint
+CGSize :: cf.CGSize
+CGFloat :: cf.CGFloat
+
+Rect :: cf.CGRect
 
 
 AXError :: enum i32 {
 	kAXErrorSuccess                           = 0,
-	kAXErrorAttributeUnsupported              = -25025,
+	kAXErrorAttributeUnsupported              = -25205,
 	kAXErrorIllegalArgument                   = -25201,
 	kAXErrorInvalidUIElement                  = -25202,
-	kAXErrorCannotComplete                    = -250204,
+	kAXErrorCannotComplete                    = -25204,
 	kAXErrorNotImplemented                    = -25208,
 	kAXErrorNoValue                           = -25212,
 	kAXErrorAPIDisabled                       = -25211,
