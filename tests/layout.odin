@@ -25,23 +25,23 @@ import "core:testing"
  */
 TileWindowCall :: struct {
 	window_ref: rawptr,
-	vector:     earl.Vector2,
+	rectangle:  earl.Rect,
 }
 
-mock_tile_window :: proc(window_ref: osx.AXUIElementRef, vector: earl.Vector2) -> bool {
+mock_tile_window :: proc(window_ref: osx.AXUIElementRef, rect: earl.Rect) -> bool {
 	test := cast(^TileTest)context.user_ptr
-	append(test.windows, TileWindowCall{window_ref, vector})
+	append(test.windows, TileWindowCall{window_ref, rect})
 
 	return true
 }
 
-mock_get_max_size :: proc() -> earl.Vector2 {
+mock_get_max_size :: proc() -> earl.Size {
 	test := cast(^TileTest)context.user_ptr
-	return test.vector
+	return test.size
 }
 
 TileTest :: struct {
-	vector:  earl.Vector2,
+	size:    earl.Size,
 	windows: ^[dynamic]TileWindowCall,
 }
 
@@ -55,7 +55,7 @@ render_fullscreen_layer :: proc(t: ^testing.T) {
 	calls: [dynamic]TileWindowCall
 	defer delete(calls)
 
-	test := TileTest{earl.Vector2{1920, 1080}, &calls}
+	test := TileTest{earl.Size{1920, 1080}, &calls}
 	context.user_ptr = &test
 
 
@@ -63,8 +63,14 @@ render_fullscreen_layer :: proc(t: ^testing.T) {
 	earl.render_layer(&layer, &backend)
 	testing.expect(t, len(calls) == 1, "Should render one window")
 	call := pop_front(&calls)
-	testing.expect(t, call.vector.x == 1920, "render with the full width - 1920")
-	testing.expect(t, call.vector.y == 1080, "render with the full height - 1080")
+	testing.expect(
+		t,
+		call.rectangle.size == earl.Size{1920, 1080},
+		"render with the full size - 1920 x 1080",
+	)
+
+	testing.expect(t, call.rectangle.origin == osx.CGPoint{0, 0}, "start top-left 0,0")
+
 }
 
 @(test)
@@ -72,7 +78,7 @@ render_even_vertical_split :: proc(t: ^testing.T) {
 	calls: [dynamic]TileWindowCall
 	defer delete(calls)
 
-	test := TileTest{earl.Vector2{1920, 1080}, &calls}
+	test := TileTest{earl.Size{1920, 1080}, &calls}
 	context.user_ptr = &test
 
 	child := earl.Layer(earl.Window{window_ref = nil})
@@ -89,14 +95,26 @@ render_even_vertical_split :: proc(t: ^testing.T) {
 
 	testing.expect(t, len(calls) == 2, "Should render two windows")
 
-	testing.expect(t, calls[0].vector.x == 960, "render first window with the half width - 960")
-	testing.expect(t, calls[0].vector.y == 1080, "render first window with the full height - 1080")
-
-	testing.expect(t, calls[1].vector.x == 960, "render second window with the half width - 960")
 	testing.expect(
 		t,
-		calls[1].vector.y == 1080,
-		"render second window with the full height - 1080",
+		calls[0].rectangle.size == earl.Size{960, 1080},
+		"render first window with the half width - 960, 1080",
+	)
+	testing.expect(
+		t,
+		calls[0].rectangle.origin == osx.CGPoint{0, 0},
+		"render first window top-left 0,0",
+	)
+
+	testing.expect(
+		t,
+		calls[1].rectangle.size == earl.Size{960, 1080},
+		"render second window with the half width - 960, 1080",
+	)
+	testing.expect(
+		t,
+		calls[1].rectangle.origin == osx.CGPoint{960, 0},
+		"render second window split vertically, 960,0",
 	)
 }
 
@@ -105,7 +123,8 @@ render_horizontal_split :: proc(t: ^testing.T) {
 	calls: [dynamic]TileWindowCall
 	defer delete(calls)
 
-	test := TileTest{earl.Vector2{1920, 1080}, &calls}
+
+	test := TileTest{earl.Size{1920, 1080}, &calls}
 	context.user_ptr = &test
 
 	child := earl.Layer(earl.Window{window_ref = nil})
@@ -122,11 +141,23 @@ render_horizontal_split :: proc(t: ^testing.T) {
 
 	testing.expect(t, len(calls) == 2, "Should render two windows")
 
-	testing.expect(t, calls[0].vector.x == 1920, "render first window with the full width - 1920")
-	testing.expect(t, calls[0].vector.y == 540, "render first window with the half height - 540")
+	testing.expect(
+		t,
+		calls[0].rectangle.size == earl.Size{1920, 540},
+		"render first window with the half height - 1920, 540",
+	)
+	testing.expect(t, calls[0].rectangle.origin == osx.CGPoint{0, 0}, "starts top left - 0,0")
 
-	testing.expect(t, calls[1].vector.x == 1920, "render second window with the full width - 1920")
-	testing.expect(t, calls[1].vector.y == 540, "render second window with the half height - 540")
+	testing.expect(
+		t,
+		calls[1].rectangle.size == earl.Size{1920, 540},
+		"render second window with the half height - 1920, 540",
+	)
+	testing.expect(
+		t,
+		calls[1].rectangle.origin == {0, 540},
+		"render second window with the halfway down the screen - 0, 540",
+	)
 }
 
 @(test)
@@ -134,7 +165,7 @@ render_tree_with_horizontal_vertical_splits :: proc(t: ^testing.T) {
 	calls: [dynamic]TileWindowCall
 	defer delete(calls)
 
-	test := TileTest{earl.Vector2{1920, 1080}, &calls}
+	test := TileTest{earl.Size{1920, 1080}, &calls}
 	context.user_ptr = &test
 
 	window_child := earl.Layer(earl.Window{window_ref = nil})
@@ -158,18 +189,25 @@ render_tree_with_horizontal_vertical_splits :: proc(t: ^testing.T) {
 
 	testing.expect(t, len(calls) == 3, "Should render three windows")
 
-	testing.expect(t, calls[0].vector.x == 960, "render first window with the half width - 960")
-	testing.expect(t, calls[0].vector.y == 1080, "render first window with the full height - 1080")
+	testing.expect(
+		t,
+		calls[0].rectangle == earl.Rect{{0, 0}, {960, 1080}},
+		"render first window top left half the width - (0,0), (960, 1080)",
+	)
 
-	testing.expect(t, calls[1].vector.x == 960, "render second window with the half width - 960")
-	testing.expect(t, calls[1].vector.y == 540, "render second window with the half height - 540")
+	testing.expect(
+		t,
+		calls[1].rectangle == earl.Rect{{960, 0}, {960, 540}},
+		"render second window top-right half the width, half the height - (960,0), (960, 540)",
+	)
 
-	testing.expect(t, calls[2].vector.x == 960, "render third window with the half width - 960")
-	testing.expect(t, calls[2].vector.y == 540, "render third window with the half height - 540")
+
+	testing.expect(
+		t,
+		calls[2].rectangle == earl.Rect{{960, 540}, {960, 540}},
+		"render third window bottom-right half the width, half the height - (960,0), (960, 540)",
+	)
 }
-
-@(test)
-render_tree_vertical_split_floating_point_ratio :: proc(t: ^testing.T) {}
 
 @(test)
 render_tree_with_multiple_splits :: proc(t: ^testing.T) {
@@ -198,18 +236,33 @@ render_tree_with_multiple_splits :: proc(t: ^testing.T) {
 	calls: [dynamic]TileWindowCall
 	defer delete(calls)
 
-	test := TileTest{earl.Vector2{1920, 1080}, &calls}
+	test := TileTest{earl.Size{1920, 1080}, &calls}
 	context.user_ptr = &test
 	earl.render_layer(&root, &backend)
 
 	testing.expect(t, len(calls) == 3, "Should emit three render calls")
 	// left window
-	testing.expect(t, calls[0].vector.x == 1152, "Left width")
-	testing.expect(t, calls[0].vector.y == 1080, "Left height")
+	testing.expect(
+		t,
+		calls[0].rectangle == earl.Rect{{0, 0}, {1152, 1080}},
+		"render first window top left half the width - (0,0), (1152, 1080)",
+	)
+
 	// right top
-	testing.expect(t, calls[1].vector.x == 768, "Right-top width")
-	testing.expect(t, calls[1].vector.y == 270, "Right-top height")
+	testing.expect(
+		t,
+		calls[1].rectangle == earl.Rect{{1152, 0}, {768, 270}},
+		"render second window top right half the width - (1152,0), (768, 270)",
+	)
 	// right bottom
-	testing.expect(t, calls[2].vector.x == 768, "Right-bottom width")
-	testing.expect(t, calls[2].vector.y == 810, "Right-bottom height")
+	testing.expect(
+		t,
+		calls[2].rectangle == earl.Rect{{1152, 270}, {768, 810}},
+		"render third window bottom right half the width - (1152,0), (768, 810)",
+	)
 }
+
+//
+// @(test)
+// render_tree_vertical_split_floating_point_ratio :: proc(t: ^testing.T) {}
+//

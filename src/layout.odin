@@ -24,40 +24,35 @@ Split :: struct {
 }
 
 Node :: struct {
-	layer:  ^Layer,
-	vector: Vector2,
+	layer: ^Layer,
+	rect:  Rect,
 }
 
 @(private = "file")
 render_window :: proc(
 	window: ^Window,
-	vector: Vector2,
+	rect: Rect,
 	nodes: ^[dynamic]Node,
 	tile_backed: ^TileBackend,
 ) -> bool {
-	return tile_backed.tile_window(window.window_ref, vector)
+	return tile_backed.tile_window(window.window_ref, rect)
 }
 
 @(private = "file")
-render_split :: proc(split: ^Split, vector: Vector2, nodes: ^[dynamic]Node) -> bool {
-	lvector := compute_split_child_max_size(split.split_variant, vector, split.left_child_ratio)
-	rvector := compute_split_child_max_size(
-		split.split_variant,
-		vector,
-		1 - split.left_child_ratio,
-	)
+render_split :: proc(split: ^Split, rect: Rect, nodes: ^[dynamic]Node) -> bool {
+	lrect, rrect := compute_split_children(split^, rect)
 
-	append(nodes, Node{split.left_child, lvector}, Node{split.right_child, rvector})
+	append(nodes, Node{split.left_child, lrect}, Node{split.right_child, rrect})
 	return true
 }
 
 @(private = "file")
-render :: proc(layer: ^Layer, vector: Vector2, nodes: ^[dynamic]Node, tile_backend: ^TileBackend) {
+render :: proc(layer: ^Layer, rect: Rect, nodes: ^[dynamic]Node, tile_backend: ^TileBackend) {
 	switch &l in layer {
 	case Window:
-		render_window(&l, vector, nodes, tile_backend)
+		render_window(&l, rect, nodes, tile_backend)
 	case Split:
-		render_split(&l, vector, nodes)
+		render_split(&l, rect, nodes)
 	}
 }
 
@@ -65,29 +60,47 @@ render_layer :: proc(layer: ^Layer, tile_backend: ^TileBackend) {
 	nodes: [dynamic]Node
 	defer delete(nodes)
 
-	vector := tile_backend.get_max_size()
+	size := tile_backend.get_max_size()
 
-	render(layer, vector, &nodes, tile_backend)
+	rect := Rect {
+		size   = size,
+		origin = {0, 0},
+	}
+
+	render(layer, rect, &nodes, tile_backend)
 
 	for len(nodes) > 0 {
 		node := pop_front(&nodes)
-		render(node.layer, node.vector, &nodes, tile_backend)
+		// because this may have to wait for each window to be properly tiled it could be better to seperate this into two threads
+		// a main thread computing the layout and a background thread taking the computed nodes and 'rendering' using the ax api
+		// currently this wouldn't work because theres no distinction here between what to render but with some tweaks i can see it
+		render(node.layer, node.rect, &nodes, tile_backend)
 	}
 }
 
 @(private = "file")
-compute_split_child_max_size :: proc(
-	split_type: SplitType,
-	vector: Vector2,
-	ratio: f64,
-) -> (
-	size: Vector2,
-) {
-	switch split_type {
+compute_split_children :: proc(split: Split, rect: Rect) -> (lrect: Rect, rrect: Rect) {
+	switch split.split_variant {
 	case .Vertical:
-		size = {vector.x * ratio, vector.y}
+		lrect = Rect {
+			size   = Size{rect.width * osx.CGFloat(split.left_child_ratio), rect.height},
+			origin = rect.origin,
+		}
+
+		rrect = Rect {
+			size = {width = rect.width - lrect.width, height = rect.height},
+			origin = {x = rect.x + lrect.width, y = rect.y},
+		}
 	case .Horizontal:
-		size = {vector.x, vector.y * ratio}
+		lrect = Rect {
+			size   = Size{rect.width, rect.height * osx.CGFloat(split.left_child_ratio)},
+			origin = rect.origin,
+		}
+
+		rrect = Rect {
+			size = {width = rect.width, height = rect.height - lrect.height},
+			origin = {x = rect.x, y = rect.y + lrect.height},
+		}
 	}
 	return
 }
