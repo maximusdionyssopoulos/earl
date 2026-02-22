@@ -1,6 +1,7 @@
 package osx
 
 import cf "core:sys/darwin/CoreFoundation"
+import "core:sys/posix"
 foreign import AX "system:ApplicationServices.framework"
 
 
@@ -12,8 +13,6 @@ ReleaseObject :: cf.ReleaseObject
 CGPoint :: cf.CGPoint
 CGSize :: cf.CGSize
 CGFloat :: cf.CGFloat
-
-Rect :: cf.CGRect
 
 
 AXError :: enum i32 {
@@ -35,22 +34,32 @@ AXError :: enum i32 {
 	kAXErrorParameterizedAttributeUnsupported = -25213,
 }
 
+AXValueType :: enum u32 {
+	AXError = 5,
+	CFRange = 4,
+	CGPoint = 1,
+	CGRect  = 3,
+	CGSize  = 2,
+	Illegal = 0,
+}
+
+
 @(default_calling_convention = "c", link_prefix = "AX")
 foreign AX {
 	IsProcessTrusted :: proc() -> bool ---
 	UIElementCreateSystemWide :: proc() -> AXUIElementRef ---
-	UIElementCreateApplication :: proc(pid: i32) -> AXUIElementRef ---
-	UIElementCopyAttributeValue :: proc(element: AXUIElementRef, attribute: cf.String, value: cf.TypeRef) -> AXError ---
-	UIElementSetAttributeValue :: proc(element: AXUIElementRef, attribute: cf.String, value: Maybe(cf.TypeRef)) -> AXError ---
+	UIElementCreateApplication :: proc(pid: posix.pid_t) -> AXUIElementRef ---
+	UIElementCopyAttributeValue :: proc(element: AXUIElementRef, attribute: cf.String, value: ^cf.TypeRef) -> AXError ---
+	UIElementSetAttributeValue :: proc(element: AXUIElementRef, attribute: cf.String, value: cf.TypeRef) -> AXError ---
+	ValueCreate :: proc(theType: AXValueType, ptr: rawptr) -> AXValue ---
+	ValueGetValue :: proc(value: AXValue, theType: AXValueType, valuePtr: rawptr) -> bool ---
 }
 
-@(default_calling_convention = "c", link_prefix = "kAX")
-foreign AX {
-	PositionAttribure: cf.String
-	SizeAttribute: cf.String
-	FocusedAttribute: cf.String
-	WindowsAttibute: cf.String
-}
+Attribute :: cf.String
+PositionAttribute := Attribute(cf.STR("AXPosition"))
+SizeAttribute := (cf.STR("AXSize"))
+// FocusedAttribute :: cf.StringMakeConstantString("kAXFocused")
+WindowsAttribute := cf.STR("AXWindows")
 
 GetCurrentWindowAXUIElements :: proc(
 	allocator := context.allocator,
@@ -75,7 +84,6 @@ GetCurrentWindowAXUIElements :: proc(
 	for i in 0 ..< count {
 		{
 			dict := ArrayGetValueAtIndex(window_list, i)
-			// defer cf.ReleaseObject(dict)
 
 			pid := get_int_from_dict(dict, kCGWindowOwnerPID) or_continue
 
@@ -83,17 +91,23 @@ GetCurrentWindowAXUIElements :: proc(
 
 			processed_pids[pid] = true
 
-			appAxUIEl := UIElementCreateApplication(pid)
 
-			windowAxUIElements: Array
-			if UIElementCopyAttributeValue(appAxUIEl, WindowsAttibute, windowAxUIElements) != AXError.kAXErrorSuccess do return
-
-			windowsCount := ArrayGetCount(windowAxUIElements)
-			for j in 0 ..< count {
-				append(&ax_ui_elements, ArrayGetValueAtIndex(windowAxUIElements, j))
-			}
+			get_window_refs_from_pid(posix.pid_t(pid), &ax_ui_elements)
 		}
 	}
 
 	return ax_ui_elements, true
+}
+
+get_window_refs_from_pid :: proc(pid: posix.pid_t, window_refs: ^[dynamic]AXUIElementRef) {
+	appAxUIEl := UIElementCreateApplication(pid)
+
+	windowAxUIElements: Array
+	ax_error := UIElementCopyAttributeValue(appAxUIEl, WindowsAttribute, &windowAxUIElements)
+	if ax_error != AXError.kAXErrorSuccess do return
+
+	windowsCount := ArrayGetCount(windowAxUIElements)
+	for i in 0 ..< windowsCount {
+		append(window_refs, ArrayGetValueAtIndex(windowAxUIElements, i))
+	}
 }

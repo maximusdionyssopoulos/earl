@@ -19,17 +19,22 @@ TileBackend :: struct {
 
 @(private = "file")
 tile_window :: proc(axUIElement: osx.AXUIElementRef, rect: Rect) -> bool {
-	// point := osx.CGPoint {
-	// 	x = osx.CGFloat(vector.x),
-	// 	y = osx.CGFloat(vector.y),
-	// }
-	// ax_point_value := osx.ValueCreate(osx.AXValueType.CGPoint, rawptr(&point))
-	// defer osx.ReleaseObject(ax_point_value)
-	//
-	// error := osx.UIElementSetAttributeValue(axUIElement, osx.PositionAttribute, ax_point_value)
-	// log.info(error)
-	// return true
-	return false
+	point := rect.origin
+	ax_point_value := osx.ValueCreate(osx.AXValueType.CGPoint, rawptr(&point))
+	defer osx.ReleaseObject(ax_point_value)
+
+	set_position_error := osx.UIElementSetAttributeValue(
+		axUIElement,
+		osx.PositionAttribute,
+		ax_point_value,
+	)
+
+	size := rect.size
+	ax_size_value := osx.ValueCreate(osx.AXValueType.CGSize, rawptr(&size))
+	defer osx.ReleaseObject(ax_size_value)
+	set_size_error := osx.UIElementSetAttributeValue(axUIElement, osx.SizeAttribute, ax_size_value)
+
+	return true
 }
 
 @(private = "file")
