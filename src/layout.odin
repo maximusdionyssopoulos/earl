@@ -60,12 +60,7 @@ render_layer :: proc(layer: ^Layer, tile_backend: ^TileBackend) {
 	nodes: [dynamic]Node
 	defer delete(nodes)
 
-	size := tile_backend.get_max_size()
-
-	rect := Rect {
-		size   = size,
-		origin = {0, 0},
-	}
+	rect := tile_backend.get_max_size()
 
 	render(layer, rect, &nodes, tile_backend)
 

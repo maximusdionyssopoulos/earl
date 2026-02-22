@@ -17,7 +17,7 @@ import "core:testing"
   calls: [dynamic]TileWindowCall
 	defer delete(calls)
 
-	test := TileTest{earl.Vector2{1920, 1080}, &calls}
+	test := TileTest{earl.Rect{size = {1920, 1080}, origin = {0, 0}}, &calls}
 	context.user_ptr = &test
  * ```
  * The because the mocked testing backend appends & reads from this we can assert that the correct computations happened with the
@@ -35,13 +35,13 @@ mock_tile_window :: proc(window_ref: osx.AXUIElementRef, rect: earl.Rect) -> boo
 	return true
 }
 
-mock_get_max_size :: proc() -> earl.Size {
+mock_get_max_size :: proc() -> earl.Rect {
 	test := cast(^TileTest)context.user_ptr
-	return test.size
+	return test.rect
 }
 
 TileTest :: struct {
-	size:    earl.Size,
+	rect:    earl.Rect,
 	windows: ^[dynamic]TileWindowCall,
 }
 
@@ -55,7 +55,7 @@ render_fullscreen_layer :: proc(t: ^testing.T) {
 	calls: [dynamic]TileWindowCall
 	defer delete(calls)
 
-	test := TileTest{earl.Size{1920, 1080}, &calls}
+	test := TileTest{earl.Rect{size = {1920, 1080}, origin = {0, 0}}, &calls}
 	context.user_ptr = &test
 
 
@@ -78,7 +78,7 @@ render_even_vertical_split :: proc(t: ^testing.T) {
 	calls: [dynamic]TileWindowCall
 	defer delete(calls)
 
-	test := TileTest{earl.Size{1920, 1080}, &calls}
+	test := TileTest{earl.Rect{size = {1920, 1080}, origin = {0, 0}}, &calls}
 	context.user_ptr = &test
 
 	child := earl.Layer(earl.Window{window_ref = nil})
@@ -124,7 +124,7 @@ render_horizontal_split :: proc(t: ^testing.T) {
 	defer delete(calls)
 
 
-	test := TileTest{earl.Size{1920, 1080}, &calls}
+	test := TileTest{earl.Rect{size = {1920, 1080}, origin = {0, 0}}, &calls}
 	context.user_ptr = &test
 
 	child := earl.Layer(earl.Window{window_ref = nil})
@@ -165,7 +165,7 @@ render_tree_with_horizontal_vertical_splits :: proc(t: ^testing.T) {
 	calls: [dynamic]TileWindowCall
 	defer delete(calls)
 
-	test := TileTest{earl.Size{1920, 1080}, &calls}
+	test := TileTest{earl.Rect{size = {1920, 1080}, origin = {0, 0}}, &calls}
 	context.user_ptr = &test
 
 	window_child := earl.Layer(earl.Window{window_ref = nil})
@@ -236,7 +236,7 @@ render_tree_with_multiple_splits :: proc(t: ^testing.T) {
 	calls: [dynamic]TileWindowCall
 	defer delete(calls)
 
-	test := TileTest{earl.Size{1920, 1080}, &calls}
+	test := TileTest{earl.Rect{size = {1920, 1080}, origin = {0, 0}}, &calls}
 	context.user_ptr = &test
 	earl.render_layer(&root, &backend)
 
