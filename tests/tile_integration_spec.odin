@@ -4,7 +4,6 @@ import earl "../src"
 import osx "../src/osx/"
 
 import "base:intrinsics"
-import "core:log"
 import "core:sys/posix"
 import "core:testing"
 

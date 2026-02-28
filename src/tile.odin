@@ -1,6 +1,5 @@
 package earl
 
-import "core:log"
 import obj_c "core:sys/darwin/Foundation"
 import "osx"
 

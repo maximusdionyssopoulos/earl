@@ -3,7 +3,6 @@ package tests
 import earl "../src/"
 import osx "../src/osx"
 
-import "core:log"
 import "core:testing"
 
 
