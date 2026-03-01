@@ -78,9 +78,9 @@ tile_window_moves_window :: proc(t: ^testing.T) {
 		panic("Error spawning terminal and getting window ref")
 	}
 
-	rect := earl.OSXTileBackend.get_max_size()
+	rect := earl.tile_getScreenSize()
 
-	earl.OSXTileBackend.tile_window(axel_ref, rect)
+	earl.tile_window(axel_ref, rect)
 
 	position, pos_ok := read_attribute(
 		axel_ref,

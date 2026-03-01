@@ -14,19 +14,19 @@ SessionManager :: struct {
 
 
 Session :: struct {
-	handle:          Handle,
-	layers:          [dynamic]Layer,
-	last_used_layer: ^Layer,
+	handle:  Handle,
+	windows: hm.Dynamic_Handle_Map(Window, WindowID),
+	layers:  hm.Dynamic_Handle_Map(Layer, LayerID),
 }
 
-set_active_session :: proc(manager: ^SessionManager, handle: Handle) -> bool {
+sessionManager_setActive :: proc(manager: ^SessionManager, handle: Handle) -> bool {
 	hm.static_is_valid(manager.sessions, handle) or_return
 
 	manager.active_session = handle
 	return true
 }
 
-delete_session :: proc(manager: ^SessionManager, handle: Handle) -> bool {
+session_delete :: proc(manager: ^SessionManager, handle: Handle) -> bool {
 	hm.static_remove(&manager.sessions, handle) or_return
 
 	// this needs to deal with every space under every session - initial idea is to combine the active sesson
@@ -36,8 +36,7 @@ delete_session :: proc(manager: ^SessionManager, handle: Handle) -> bool {
 }
 
 
-create_session :: proc(manager: ^SessionManager) -> (Handle, bool) {
-
+session_new :: proc(manager: ^SessionManager) -> (Handle, bool) {
 	session := Session{}
 
 	session_handle, ok := hm.add(&manager.sessions, session)
