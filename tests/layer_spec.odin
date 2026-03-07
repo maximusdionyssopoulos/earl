@@ -8,8 +8,8 @@ import "core:testing"
 
 @(test)
 render_fullscreen_layer :: proc(t: ^testing.T) {
-	slot: earl.Slot
-	earl.layer_setVariant(&slot)
+	slot: earl.LayerVariant
+	slot = &earl.Slot{}
 
 	calls: [dynamic]earl.WindowDrawCall
 	defer delete(calls)
@@ -39,16 +39,16 @@ render_even_vertical_split :: proc(t: ^testing.T) {
 	calls: [dynamic]earl.WindowDrawCall
 	defer delete(calls)
 
-	child := earl.Slot{}
-	earl.layer_setVariant(&child)
+	child: earl.SplitChild
+	child = earl.WindowID{}
 
-	split := earl.Split {
+	split: earl.LayerVariant
+	split = &earl.Split {
 		left_child_ratio = 0.5,
-		split_variant    = earl.SplitType.Vertical,
-		left_child       = &child,
-		right_child      = &child,
+		split_variant = earl.SplitType.Vertical,
+		left_child = &child,
+		right_child = &child,
 	}
-	earl.layer_setVariant(&split)
 
 	earl.layer_computeRectangles(&calls, &split, earl.Rect{size = {1920, 1080}, origin = {0, 0}})
 
@@ -82,16 +82,16 @@ render_horizontal_split :: proc(t: ^testing.T) {
 	calls: [dynamic]earl.WindowDrawCall
 	defer delete(calls)
 
-	child := earl.Slot{}
-	earl.layer_setVariant(&child)
+	child: earl.SplitChild
+	child = earl.WindowID{}
 
-	split := earl.Split {
+	split: earl.LayerVariant
+	split = &earl.Split {
 		left_child_ratio = 0.5,
-		split_variant    = earl.SplitType.Horizontal,
-		left_child       = &child,
-		right_child      = &child,
+		split_variant = earl.SplitType.Horizontal,
+		left_child = &child,
+		right_child = &child,
 	}
-	earl.layer_setVariant(&split)
 
 	earl.layer_computeRectangles(&calls, &split, earl.Rect{size = {1920, 1080}, origin = {0, 0}})
 
@@ -121,24 +121,24 @@ render_tree_with_horizontal_vertical_splits :: proc(t: ^testing.T) {
 	calls: [dynamic]earl.WindowDrawCall
 	defer delete(calls)
 
-	slot := earl.Slot{}
-	earl.layer_setVariant(&slot)
+	child: earl.SplitChild
+	child = earl.WindowID{}
 
-	right_child := earl.Split {
+	right_child: earl.SplitChild
+	right_child = earl.Split {
 		left_child_ratio = 0.5,
 		split_variant    = earl.SplitType.Horizontal,
-		left_child       = &slot,
-		right_child      = &slot,
+		left_child       = &child,
+		right_child      = &child,
 	}
-	earl.layer_setVariant(&right_child)
 
-	split := earl.Split {
+	split: earl.LayerVariant
+	split = &earl.Split {
 		left_child_ratio = 0.5,
-		split_variant    = earl.SplitType.Vertical,
-		left_child       = &slot,
-		right_child      = &right_child,
+		split_variant = earl.SplitType.Vertical,
+		left_child = &child,
+		right_child = &right_child,
 	}
-	earl.layer_setVariant(&split)
 
 	earl.layer_computeRectangles(&calls, &split, earl.Rect{size = {1920, 1080}, origin = {0, 0}})
 
@@ -166,24 +166,25 @@ render_tree_with_horizontal_vertical_splits :: proc(t: ^testing.T) {
 
 @(test)
 render_tree_with_multiple_splits :: proc(t: ^testing.T) {
-	slot := earl.Slot{}
-	earl.layer_setVariant(&slot)
+	child: earl.SplitChild
+	child = earl.WindowID{}
 
-	right := earl.Split {
+
+	right: earl.SplitChild
+	right = earl.Split {
 		split_variant    = .Horizontal,
-		left_child       = &slot,
 		left_child_ratio = 0.25,
-		right_child      = &slot,
+		left_child       = &child,
+		right_child      = &child,
 	}
-	earl.layer_setVariant(&right)
 
-	root := earl.Split {
-		split_variant    = .Vertical,
-		left_child       = &slot,
+	root: earl.LayerVariant
+	root = &earl.Split {
+		split_variant = .Vertical,
+		left_child = &child,
 		left_child_ratio = 0.6,
-		right_child      = &right,
+		right_child = &right,
 	}
-	earl.layer_setVariant(&root)
 
 	calls: [dynamic]earl.WindowDrawCall
 	defer delete(calls)

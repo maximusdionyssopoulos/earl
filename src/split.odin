@@ -2,23 +2,29 @@ package earl
 
 import "osx"
 
+// A Split represents a tree of windows
+Split :: struct {
+	using layer:      Layer,
+	split_variant:    SplitType,
+	left_child:       ^SplitChild,
+	left_child_ratio: f64,
+	right_child:      ^SplitChild,
+}
+
 SplitType :: enum {
 	Horizontal,
 	Vertical,
 }
 
-Split :: struct {
-	using layer:      Layer,
-	split_variant:    SplitType,
-	left_child:       ^Layer,
-	left_child_ratio: f64,
-	right_child:      ^Layer,
+SplitChild :: union {
+	WindowID,
+	Split,
 }
 
 @(private = "file")
 SplitNode :: struct {
-	layer: ^Layer,
-	rect:  Rect,
+	node: ^SplitChild,
+	rect: Rect,
 }
 
 @(private)
@@ -26,17 +32,18 @@ split_walk :: proc(split: ^Split, rect: Rect, calls: ^[dynamic]WindowDrawCall) {
 	nodes: [dynamic]SplitNode
 	defer delete(nodes)
 
-	append(&nodes, SplitNode{split, rect})
+	lrect, rrect := split_computeRectangles(split^, rect)
+	append(&nodes, SplitNode{split.left_child, lrect}, SplitNode{split.right_child, rrect})
 
 	for len(nodes) > 0 {
 		sn := pop_front(&nodes)
-		switch sl in sn.layer.variant {
-		case ^Slot:
-			slot_appendDrawCall(sl, sn.rect, calls)
-		case ^Split:
-			lrect, rrect := split_computeRectangles(sl^, sn.rect)
+		switch c in sn.node {
+		case WindowID:
+			window_appendDrawCall(c, sn.rect, calls)
+		case Split:
+			lrect, rrect := split_computeRectangles(c, sn.rect)
 
-			append(&nodes, SplitNode{sl.left_child, lrect}, SplitNode{sl.right_child, rrect})
+			append(&nodes, SplitNode{c.left_child, lrect}, SplitNode{c.right_child, rrect})
 		}
 	}
 }

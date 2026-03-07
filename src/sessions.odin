@@ -1,6 +1,8 @@
 package earl
 
+import "base:runtime"
 import hm "core:container/handle_map"
+import "core:container/small_array"
 
 MAX_SESSIONS :: 10
 
@@ -8,15 +10,18 @@ Handle :: hm.Handle16
 
 SessionManager :: struct {
 	active_session: Handle,
-	// zero value is reserved for sentinel : https://pkg.odin-lang.org/core/container/handle_map/#static_cap
-	sessions:       hm.Static_Handle_Map(MAX_SESSIONS + 1, Session, Handle),
+	sessions:       hm.Static_Handle_Map(MAX_SESSIONS + 1, Session, Handle), // zero value is reserved for sentinel : https://pkg.odin-lang.org/core/container/handle_map/#static_cap
+	screens:        hm.Dynamic_Handle_Map(Screen, ScreenHandle),
+	windows:        hm.Dynamic_Handle_Map(Window, WindowID),
 }
 
+Manager := SessionManager{}
 
 Session :: struct {
 	handle:  Handle,
-	windows: hm.Dynamic_Handle_Map(Window, WindowID),
 	layers:  hm.Dynamic_Handle_Map(Layer, LayerID),
+	layouts: hm.Dynamic_Handle_Map(Layout, LayoutHandle),
+	panes:   small_array.Small_Array(MAX_SCREENS, Pane),
 }
 
 sessionManager_setActive :: proc(manager: ^SessionManager, handle: Handle) -> bool {
