@@ -52,3 +52,51 @@ session_new :: proc(manager: ^SessionManager) -> (Handle, bool) {
 
 	return session_handle, true
 }
+
+session_newSplit :: proc(
+	session: ^Session,
+	left_window: WindowID,
+	right_window: WindowID,
+	split_type: SplitType,
+) -> (
+	LayerID,
+	runtime.Allocator_Error,
+) {
+
+	left_child: SplitChild
+	left_child = left_window
+
+	right_child: SplitChild
+	right_child = right_window
+
+	split := split_initWithRoot(
+		{
+			left_child = left_child,
+			right_child = right_child,
+			left_child_ratio = 0.5,
+			split_variant = split_type,
+		},
+	)
+
+	return hm.dynamic_add(&session.layers, split)
+}
+
+session_splitWith :: proc(
+	session: ^Session,
+	split_id: LayerID,
+	split_window: WindowID,
+	new_window: WindowID,
+	as: SplitType,
+	insert_left: bool,
+) -> bool {
+
+	layer, ok := hm.get(&session.layers, split_id)
+	if !ok {return false}
+
+	if split, sok := layer.variant.(^Split); sok {
+		return split_insert(split, split_window, new_window, as, insert_left)
+	}
+
+	return false
+}
+
