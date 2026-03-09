@@ -4,12 +4,11 @@ import hm "core:container/handle_map"
 
 LayerID :: hm.Handle16
 Layer :: struct {
-	handle: LayerID,
-}
-
-LayerVariant :: union {
-	^Slot,
-	^Split,
+	handle:  LayerID,
+	variant: union {
+		^Slot,
+		^Split,
+	},
 }
 
 layer_tile :: proc(layer: ^Layer) {
@@ -21,16 +20,12 @@ layer_tile :: proc(layer: ^Layer) {
 	// currently this wouldn't work because theres no distinction here between what to render but with some tweaks i can see it
 }
 
-layer_computeRectangles :: proc(
-	calls: ^[dynamic]WindowDrawCall,
-	layer: ^LayerVariant,
-	rect: Rect,
-) {
-	switch l in layer {
+layer_computeRectangles :: proc(calls: ^[dynamic]WindowDrawCall, layer: ^Layer, rect: Rect) {
+	switch l in layer.variant {
 	case ^Slot:
 		window_appendDrawCall(l.window_id, rect, calls)
 	case ^Split:
-		split_walk(l, rect, calls)
+		split_computeRectangles(l, rect, calls)
 	}
 }
 
