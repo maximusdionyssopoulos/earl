@@ -1,14 +1,18 @@
 package earl
 
+import "base:runtime"
 import "osx"
 
 // A Split represents a tree of windows
 Split :: struct {
-	using layer:      Layer,
-	split_variant:    SplitType,
-	left_child:       ^SplitChild,
-	left_child_ratio: f64,
-	right_child:      ^SplitChild,
+	using layer: Layer,
+	_root:       ^Node,
+	_allocator:  runtime.Allocator,
+}
+
+SplitChild :: union {
+	WindowID,
+	^Node,
 }
 
 SplitType :: enum {
@@ -16,45 +20,59 @@ SplitType :: enum {
 	Vertical,
 }
 
-SplitChild :: union {
-	WindowID,
-	Split,
+Node :: struct {
+	split_variant:    SplitType,
+	left_child:       SplitChild,
+	left_child_ratio: f64,
+	right_child:      SplitChild,
+	parent:           ^Node,
 }
 
+
 @(private = "file")
-SplitNode :: struct {
+SplitRectangle :: struct {
 	node: ^SplitChild,
 	rect: Rect,
 }
 
 @(private)
-split_walk :: proc(split: ^Split, rect: Rect, calls: ^[dynamic]WindowDrawCall) {
-	nodes: [dynamic]SplitNode
-	defer delete(nodes)
+split_computeRectangles :: proc(split: ^Split, rect: Rect, calls: ^[dynamic]WindowDrawCall) {
+	rects: [dynamic]SplitRectangle
+	defer delete(rects)
 
-	lrect, rrect := split_computeRectangles(split^, rect)
-	append(&nodes, SplitNode{split.left_child, lrect}, SplitNode{split.right_child, rrect})
+	node := split._root
 
-	for len(nodes) > 0 {
-		sn := pop_front(&nodes)
+	lrect, rrect := node_computeRectangles(node^, rect)
+	append(
+		&rects,
+		SplitRectangle{&node.left_child, lrect},
+		SplitRectangle{&node.right_child, rrect},
+	)
+
+	for len(rects) > 0 {
+		sn := pop_front(&rects)
 		switch c in sn.node {
 		case WindowID:
 			window_appendDrawCall(c, sn.rect, calls)
-		case Split:
-			lrect, rrect := split_computeRectangles(c, sn.rect)
+		case ^Node:
+			lrect, rrect := node_computeRectangles(c^, sn.rect)
 
-			append(&nodes, SplitNode{c.left_child, lrect}, SplitNode{c.right_child, rrect})
+			append(
+				&rects,
+				SplitRectangle{&c.left_child, lrect},
+				SplitRectangle{&c.right_child, rrect},
+			)
 		}
 	}
 }
 
 
 @(private = "file")
-split_computeRectangles :: proc(split: Split, rect: Rect) -> (lrect: Rect, rrect: Rect) {
-	switch split.split_variant {
+node_computeRectangles :: proc(node: Node, rect: Rect) -> (lrect: Rect, rrect: Rect) {
+	switch node.split_variant {
 	case .Vertical:
 		lrect = Rect {
-			size   = Size{rect.width * osx.CGFloat(split.left_child_ratio), rect.height},
+			size   = Size{rect.width * osx.CGFloat(node.left_child_ratio), rect.height},
 			origin = rect.origin,
 		}
 
@@ -64,7 +82,7 @@ split_computeRectangles :: proc(split: Split, rect: Rect) -> (lrect: Rect, rrect
 		}
 	case .Horizontal:
 		lrect = Rect {
-			size   = Size{rect.width, rect.height * osx.CGFloat(split.left_child_ratio)},
+			size   = Size{rect.width, rect.height * osx.CGFloat(node.left_child_ratio)},
 			origin = rect.origin,
 		}
 

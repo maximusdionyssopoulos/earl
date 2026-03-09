@@ -3,7 +3,7 @@ package earl
 import hm "core:container/handle_map"
 import "osx"
 
-WindowID :: hm.Handle16
+WindowID :: distinct hm.Handle16
 
 // A window represents the AXUIElementRef - there should be one window object per AXUIElementRef
 Window :: struct {
