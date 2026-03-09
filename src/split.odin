@@ -93,3 +93,108 @@ node_computeRectangles :: proc(node: Node, rect: Rect) -> (lrect: Rect, rrect: R
 	}
 	return
 }
+
+
+split_init :: proc(allocator := context.allocator) -> ^Split {
+	split := new(Split, context.allocator)
+	split.variant = split
+	split._root = nil
+	split._allocator = allocator
+	return split
+}
+
+split_initWithRoot :: proc(node: Node, allocator := context.allocator) -> ^Split {
+	n_ptr := new_clone(node, allocator)
+
+	split := split_init(allocator)
+	split._root = n_ptr
+
+	return split
+}
+
+split_findNode :: proc(
+	split: ^Split,
+	containing: WindowID,
+) -> (
+	n: ^Node,
+	is_left: bool,
+	found: bool,
+) {
+	nodes: [dynamic]^Node
+	defer delete(nodes)
+
+	append(&nodes, split._root)
+	for len(nodes) > 0 {
+		node := pop_front(&nodes)
+		switch n in node.left_child {
+		case WindowID:
+			if n == containing {
+				return node, true, true
+			}
+		case ^Node:
+			append(&nodes, n)
+		}
+
+		switch n in node.right_child {
+		case WindowID:
+			if n == containing {
+				return node, false, true
+			}
+		case ^Node:
+			append(&nodes, n)
+		}
+	}
+	return nil, false, false
+}
+
+split_destroy :: proc(split: ^Split) {
+	stack: [dynamic]^Node
+	defer delete(stack)
+
+	append(&stack, split._root)
+
+	for len(stack) > 0 {
+		n := pop_front(&stack)
+
+		if l, lok := n.left_child.(^Node); lok {
+			append(&stack, l)
+		}
+		if r, rok := n.right_child.(^Node); rok {
+			append(&stack, r)
+		}
+
+		free(n, split._allocator)
+	}
+
+	free(split, split._allocator)
+}
+
+split_insert :: proc(
+	split: ^Split,
+	containing: WindowID,
+	with: WindowID,
+	as: SplitType,
+	as_leftchild: bool,
+) -> bool {
+	node, is_left, found := split_findNode(split, containing)
+
+	if !found {return false}
+
+	_, _, alreadyHas := split_findNode(split, with)
+	if alreadyHas {return false}
+
+	new_node := new(Node, split._allocator)
+	new_node.left_child = with if as_leftchild else containing
+	new_node.right_child = containing if as_leftchild else with
+	new_node.split_variant = as
+	new_node.left_child_ratio = 0.5
+	new_node.parent = node
+
+	if is_left {
+		node.left_child = new_node
+	} else {
+		node.right_child = new_node
+	}
+
+	return true
+}
