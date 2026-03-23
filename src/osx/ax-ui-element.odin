@@ -72,7 +72,7 @@ GetCurrentWindowAXUIElements :: proc(
 	options := WindowListOption(
 		kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
 	)
-	window_list := CGWindowListCopyWindowInfo(options, kCGNullWindowID)
+	window_list := WindowListCopyWindowInfo(options, kCGNullWindowID)
 	defer cf.ReleaseObject(window_list)
 
 	count := ArrayGetCount(window_list)
@@ -85,7 +85,7 @@ GetCurrentWindowAXUIElements :: proc(
 		{
 			dict := ArrayGetValueAtIndex(window_list, i)
 
-			pid := get_int_from_dict(dict, kCGWindowOwnerPID) or_continue
+			pid := get_int_from_dict(dict, WindowOwnerPID) or_continue
 
 			if (pid in processed_pids) do continue
 

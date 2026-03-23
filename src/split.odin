@@ -1,6 +1,7 @@
 package earl
 
 import "base:runtime"
+import "core:log"
 import "osx"
 
 // A Split represents a tree of windows
@@ -11,7 +12,7 @@ Split :: struct {
 }
 
 SplitChild :: union {
-	WindowID,
+	WindowHandle,
 	^Node,
 }
 
@@ -52,7 +53,7 @@ split_computeRectangles :: proc(split: ^Split, rect: Rect, calls: ^[dynamic]Wind
 	for len(rects) > 0 {
 		sn := pop_front(&rects)
 		switch c in sn.node {
-		case WindowID:
+		case WindowHandle:
 			window_appendDrawCall(c, sn.rect, calls)
 		case ^Node:
 			lrect, rrect := node_computeRectangles(c^, sn.rect)
@@ -114,7 +115,7 @@ split_initWithRoot :: proc(node: Node, allocator := context.allocator) -> ^Split
 
 split_findNode :: proc(
 	split: ^Split,
-	containing: WindowID,
+	containing: WindowHandle,
 ) -> (
 	n: ^Node,
 	is_left: bool,
@@ -127,7 +128,7 @@ split_findNode :: proc(
 	for len(nodes) > 0 {
 		node := pop_front(&nodes)
 		switch n in node.left_child {
-		case WindowID:
+		case WindowHandle:
 			if n == containing {
 				return node, true, true
 			}
@@ -136,7 +137,7 @@ split_findNode :: proc(
 		}
 
 		switch n in node.right_child {
-		case WindowID:
+		case WindowHandle:
 			if n == containing {
 				return node, false, true
 			}
@@ -171,8 +172,8 @@ split_destroy :: proc(split: ^Split) {
 
 split_insert :: proc(
 	split: ^Split,
-	containing: WindowID,
-	with: WindowID,
+	containing: WindowHandle,
+	with: WindowHandle,
 	as: SplitType,
 	as_leftchild: bool,
 ) -> bool {

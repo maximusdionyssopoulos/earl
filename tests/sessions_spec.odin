@@ -2,6 +2,7 @@ package tests
 
 import earl "../src/"
 import "core:container/handle_map"
+import "core:log"
 
 import "core:testing"
 

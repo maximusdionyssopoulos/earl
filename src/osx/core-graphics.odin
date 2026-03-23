@@ -16,16 +16,16 @@ kCGWindowListExcludeDesktopElements :: (1 << 4)
 WindowID :: distinct u32
 kCGNullWindowID :: WindowID(0)
 
-@(default_calling_convention = "c")
+@(default_calling_convention = "c", link_prefix = "CG")
 foreign CoreFoundations {
-	CGWindowListCopyWindowInfo :: proc(option: WindowListOption, relativeToWindow: WindowID) -> Array ---
+	WindowListCopyWindowInfo :: proc(option: WindowListOption, relativeToWindow: WindowID) -> Array ---
 }
 
-@(default_calling_convention = "c")
+@(default_calling_convention = "c", link_prefix = "kCG")
 foreign CoreFoundations {
-	kCGWindowOwnerPID: cf.String
-	kCGWindowOwnerName: cf.String
-	kCGWindowName: cf.String
-	kCGWindowLayer: cf.String
-	kCGWindowNumber: cf.String
+	WindowOwnerPID: cf.String
+	WindowOwnerName: cf.String
+	WindowName: cf.String
+	WindowLayer: cf.String
+	WindowNumber: cf.String
 }

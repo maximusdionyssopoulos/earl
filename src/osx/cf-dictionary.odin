@@ -23,3 +23,14 @@ get_int_from_dict :: proc(dict: Dictionary, key: cf.String) -> (i32, bool) {
 	cf_number_get_value(num_ref, i32, &result)
 	return result, true
 }
+
+get_string_from_dict :: proc(dict: Dictionary, key: cf.String) -> (string, bool) {
+
+	val_ptr: cf.TypeRef
+
+	if !DictionaryGetValueIfPresent(dict, rawptr(key), &val_ptr) {
+		return "", false
+	}
+
+	return cf.StringCopyToOdinString(cast(cf.String)val_ptr)
+}
