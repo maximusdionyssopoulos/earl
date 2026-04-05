@@ -1,15 +1,7 @@
-package osx
-
+package CoreFoundation
 
 foreign import CoreFoundation "system:CoreFoundation.framework"
-import cf "core:sys/darwin/CoreFoundation"
-
-UUID :: cf.TypeRef
-
-@(link_prefix = "CFUUID", default_calling_convention = "c")
-foreign CoreFoundation {
-	GetUUIDBytes :: proc(uuid: UUID) -> UUIDBytes ---
-}
+UUID :: TypeRef
 
 UUIDBytes :: struct {
 	byte0:  u8,
@@ -28,4 +20,9 @@ UUIDBytes :: struct {
 	byte13: u8,
 	byte14: u8,
 	byte15: u8,
+}
+
+@(link_prefix = "CF", default_calling_convention = "c")
+foreign CoreFoundation {
+	UUIDGetUUIDBytes :: proc(uuid: UUID) -> UUIDBytes ---
 }

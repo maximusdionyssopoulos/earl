@@ -1,17 +1,17 @@
-package osx
+package CoreFoundation
 
 foreign import CoreFoundation "system:CoreFoundation.framework"
-import cf "core:sys/darwin/CoreFoundation"
 
-Dictionary :: cf.TypeRef
+Dictionary :: TypeRef
 
 @(link_prefix = "CF", default_calling_convention = "c")
 foreign CoreFoundation {
 	DictionaryGetValueIfPresent :: proc(theDict: Dictionary, key: rawptr, value: rawptr) -> bool ---
 }
 
-get_int_from_dict :: proc(dict: Dictionary, key: cf.String) -> (i32, bool) {
-	val_ptr: cf.TypeRef
+
+Dictionary_getInt :: proc(dict: Dictionary, key: String) -> (i32, bool) {
+	val_ptr: TypeRef
 
 	if !DictionaryGetValueIfPresent(dict, rawptr(key), &val_ptr) {
 		return 0, false
@@ -20,17 +20,16 @@ get_int_from_dict :: proc(dict: Dictionary, key: cf.String) -> (i32, bool) {
 	num_ref := val_ptr
 	result: i32
 
-	cf_number_get_value(num_ref, i32, &result)
+	Number_getOdinValue(num_ref, i32, &result)
 	return result, true
 }
 
-get_string_from_dict :: proc(dict: Dictionary, key: cf.String) -> (string, bool) {
-
-	val_ptr: cf.TypeRef
+Dictionary_getString :: proc(dict: Dictionary, key: String) -> (string, bool) {
+	val_ptr: TypeRef
 
 	if !DictionaryGetValueIfPresent(dict, rawptr(key), &val_ptr) {
 		return "", false
 	}
 
-	return cf.StringCopyToOdinString(cast(cf.String)val_ptr)
+	return StringCopyToOdinString(cast(String)val_ptr)
 }

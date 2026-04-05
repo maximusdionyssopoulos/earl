@@ -1,19 +1,12 @@
-package osx
+package ApplicationServices
 
-import cf "core:sys/darwin/CoreFoundation"
 import "core:sys/posix"
 foreign import AX "system:ApplicationServices.framework"
 
+import CF "../CoreFoundation"
 
-TypeRef :: cf.TypeRef
-AXUIElementRef :: cf.TypeRef
-AXValue :: cf.TypeRef
-
-ReleaseObject :: cf.ReleaseObject
-CGPoint :: cf.CGPoint
-CGSize :: cf.CGSize
-CGFloat :: cf.CGFloat
-
+AXUIElementRef :: CF.TypeRef
+AXValue :: CF.TypeRef
 
 AXError :: enum i32 {
 	kAXErrorSuccess                           = 0,
@@ -43,31 +36,26 @@ AXValueType :: enum u32 {
 	Illegal = 0,
 }
 
+Attribute :: CF.String
+PositionAttribute := Attribute(CF.STR("AXPosition"))
+SizeAttribute := (CF.STR("AXSize"))
+// FocusedAttribute :: CF.StringMakeConstantString("kAXFocused")
+WindowsAttribute := CF.STR("AXWindows")
+
 
 @(default_calling_convention = "c", link_prefix = "AX")
 foreign AX {
 	IsProcessTrusted :: proc() -> bool ---
 	UIElementCreateSystemWide :: proc() -> AXUIElementRef ---
 	UIElementCreateApplication :: proc(pid: posix.pid_t) -> AXUIElementRef ---
-	UIElementCopyAttributeValue :: proc(element: AXUIElementRef, attribute: cf.String, value: ^cf.TypeRef) -> AXError ---
-	UIElementSetAttributeValue :: proc(element: AXUIElementRef, attribute: cf.String, value: cf.TypeRef) -> AXError ---
+	UIElementCopyAttributeValue :: proc(element: AXUIElementRef, attribute: CF.String, value: ^CF.TypeRef) -> AXError ---
+	UIElementSetAttributeValue :: proc(element: AXUIElementRef, attribute: CF.String, value: CF.TypeRef) -> AXError ---
 	ValueCreate :: proc(theType: AXValueType, ptr: rawptr) -> AXValue ---
 	ValueGetValue :: proc(value: AXValue, theType: AXValueType, valuePtr: rawptr) -> bool ---
 }
 
-Attribute :: cf.String
-PositionAttribute := Attribute(cf.STR("AXPosition"))
-SizeAttribute := (cf.STR("AXSize"))
-// FocusedAttribute :: cf.StringMakeConstantString("kAXFocused")
-WindowsAttribute := cf.STR("AXWindows")
-
-GetCurrentWindowAXUIElements :: proc(
-	allocator := context.allocator,
-) -> (
-	arr: [dynamic]AXUIElementRef,
-	ok: bool,
-) #optional_ok {
-	if !IsProcessTrusted() do return
+getApplicationPids :: proc(pids: ^[posix.pid_t]struct{}) -> bool {
+	if !IsProcessTrusted() do return false
 
 	options := WindowListOption(
 		kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
@@ -76,38 +64,32 @@ GetCurrentWindowAXUIElements :: proc(
 	defer cf.ReleaseObject(window_list)
 
 	count := ArrayGetCount(window_list)
-	processed_pids := make(map[i32]bool)
 	defer delete(processed_pids)
-
-	ax_ui_elements := make([dynamic]AXUIElementRef, allocator)
 
 	for i in 0 ..< count {
 		{
 			dict := ArrayGetValueAtIndex(window_list, i)
-
-			pid := get_int_from_dict(dict, WindowOwnerPID) or_continue
+			pid := dict->Dictionary_getInt(WindowOwnerPID) or_continue
 
 			if (pid in processed_pids) do continue
 
-			processed_pids[pid] = true
-
-
-			get_window_refs_from_pid(posix.pid_t(pid), &ax_ui_elements)
+			pids[pid] = {}
 		}
 	}
 
-	return ax_ui_elements, true
+	return true
+
 }
 
-get_window_refs_from_pid :: proc(pid: posix.pid_t, window_refs: ^[dynamic]AXUIElementRef) {
+getWindowRefsFromPid :: proc(pid: posix.pid_t, window_refs: ^[dynamic]AXUIElementRef) {
 	appAxUIEl := UIElementCreateApplication(pid)
 
-	windowAxUIElements: Array
+	windowAxUIElements: CF.Array
 	ax_error := UIElementCopyAttributeValue(appAxUIEl, WindowsAttribute, &windowAxUIElements)
 	if ax_error != AXError.kAXErrorSuccess do return
 
-	windowsCount := ArrayGetCount(windowAxUIElements)
+	windowsCount := CF.ArrayGetCount(windowAxUIElements)
 	for i in 0 ..< windowsCount {
-		append(window_refs, ArrayGetValueAtIndex(windowAxUIElements, i))
+		append(window_refs, CF.ArrayGetValueAtIndex(windowAxUIElements, i))
 	}
 }

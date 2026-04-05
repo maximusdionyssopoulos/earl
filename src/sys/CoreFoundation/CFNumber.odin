@@ -1,9 +1,8 @@
-package osx
+package CoreFoundation
 
 foreign import CoreFoundation "system:CoreFoundation.framework"
-import cf "core:sys/darwin/CoreFoundation"
 
-Number :: cf.TypeRef
+Number :: TypeRef
 NumberType :: enum i64 {
 	SInt8Type     = 1,
 	SInt16Type    = 2,
@@ -23,13 +22,14 @@ NumberType :: enum i64 {
 	CGFloatType   = 16,
 }
 
-@(private)
 @(link_prefix = "CF", default_calling_convention = "c")
 foreign CoreFoundation {
 	NumberGetValue :: proc(number: Number, theType: NumberType, value: rawptr) -> bool ---
+	NumberCreate :: proc(allocator: Allocator, type: NumberType, value: rawptr) -> Number ---
 }
 
-cf_number_get_value :: proc(number: Number, $T: typeid, value: ^T) -> bool {
+
+Number_getOdinValue :: proc(number: Number, $T: typeid, value: ^T) -> bool {
 	type_enum: NumberType
 
 	switch typeid_of(T) {

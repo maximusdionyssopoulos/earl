@@ -1,8 +1,7 @@
-package osx
+package CoreGraphics
 
-import cf "core:sys/darwin/CoreFoundation"
-
-foreign import CoreFoundations "system:CoreGraphics.framework"
+foreign import CoreGraphics "system:CoreGraphics.framework"
+import CF "../CoreFoundation"
 
 WindowListOption :: distinct u32
 
@@ -17,15 +16,15 @@ WindowID :: distinct u32
 kCGNullWindowID :: WindowID(0)
 
 @(default_calling_convention = "c", link_prefix = "CG")
-foreign CoreFoundations {
+foreign CoreGraphics {
 	WindowListCopyWindowInfo :: proc(option: WindowListOption, relativeToWindow: WindowID) -> Array ---
 }
 
 @(default_calling_convention = "c", link_prefix = "kCG")
-foreign CoreFoundations {
-	WindowOwnerPID: cf.String
-	WindowOwnerName: cf.String
-	WindowName: cf.String
-	WindowLayer: cf.String
-	WindowNumber: cf.String
+foreign CoreGraphics {
+	WindowOwnerPID: CF.String
+	WindowOwnerName: CF.String
+	WindowName: CF.String
+	WindowLayer: CF.String
+	WindowNumber: CF.String
 }
