@@ -1,4 +1,4 @@
-package CoreFoundation
+package CFoundation
 
 foreign import CoreFoundation "system:CoreFoundation.framework"
 UUID :: TypeRef

@@ -4,31 +4,32 @@ import "core:sys/posix"
 foreign import AX "system:ApplicationServices.framework"
 
 import CF "../CoreFoundation"
+import CG "../CoreGraphics"
 
-AXUIElementRef :: CF.TypeRef
-AXValue :: CF.TypeRef
+UIElementRef :: CF.TypeRef
+Value :: CF.TypeRef
 
-AXError :: enum i32 {
-	kAXErrorSuccess                           = 0,
-	kAXErrorAttributeUnsupported              = -25205,
-	kAXErrorIllegalArgument                   = -25201,
-	kAXErrorInvalidUIElement                  = -25202,
-	kAXErrorCannotComplete                    = -25204,
-	kAXErrorNotImplemented                    = -25208,
-	kAXErrorNoValue                           = -25212,
-	kAXErrorAPIDisabled                       = -25211,
-	kAXErrorActionUnsupported                 = -25206,
-	kAXErrorFailure                           = -25200,
-	kAXErrorInvalidUIElementObserver          = -25203,
-	kAXErrorNotEnoughPrecision                = -25214,
-	kAXErrorNotificationAlreadyRegistered     = -25209,
-	kAXErrorNotificationNotRegistered         = -25210,
-	kAXErrorNotificationUnsupported           = -25207,
-	kAXErrorParameterizedAttributeUnsupported = -25213,
+Error :: enum i32 {
+	ErrorSuccess                           = 0,
+	ErrorAttributeUnsupported              = -25205,
+	ErrorIllegalArgument                   = -25201,
+	ErrorInvalidUIElement                  = -25202,
+	ErrorCannotComplete                    = -25204,
+	ErrorNotImplemented                    = -25208,
+	ErrorNoValue                           = -25212,
+	ErrorAPIDisabled                       = -25211,
+	ErrorActionUnsupported                 = -25206,
+	ErrorFailure                           = -25200,
+	ErrorInvalidUIElementObserver          = -25203,
+	ErrorNotEnoughPrecision                = -25214,
+	ErrorNotificationAlreadyRegistered     = -25209,
+	ErrorNotificationNotRegistered         = -25210,
+	ErrorNotificationUnsupported           = -25207,
+	ErrorParameterizedAttributeUnsupported = -25213,
 }
 
-AXValueType :: enum u32 {
-	AXError = 5,
+ValueType :: enum u32 {
+	Error   = 5,
 	CFRange = 4,
 	CGPoint = 1,
 	CGRect  = 3,
@@ -46,50 +47,13 @@ WindowsAttribute := CF.STR("AXWindows")
 @(default_calling_convention = "c", link_prefix = "AX")
 foreign AX {
 	IsProcessTrusted :: proc() -> bool ---
-	UIElementCreateSystemWide :: proc() -> AXUIElementRef ---
-	UIElementCreateApplication :: proc(pid: posix.pid_t) -> AXUIElementRef ---
-	UIElementCopyAttributeValue :: proc(element: AXUIElementRef, attribute: CF.String, value: ^CF.TypeRef) -> AXError ---
-	UIElementSetAttributeValue :: proc(element: AXUIElementRef, attribute: CF.String, value: CF.TypeRef) -> AXError ---
-	ValueCreate :: proc(theType: AXValueType, ptr: rawptr) -> AXValue ---
-	ValueGetValue :: proc(value: AXValue, theType: AXValueType, valuePtr: rawptr) -> bool ---
-}
+	UIElementCreateSystemWide :: proc() -> UIElementRef ---
+	UIElementCreateApplication :: proc(pid: posix.pid_t) -> UIElementRef ---
+	UIElementCopyAttributeValue :: proc(element: UIElementRef, attribute: CF.String, value: ^CF.TypeRef) -> Error ---
+	UIElementSetAttributeValue :: proc(element: UIElementRef, attribute: CF.String, value: CF.TypeRef) -> Error ---
+	ValueCreate :: proc(theType: ValueType, ptr: rawptr) -> Value ---
+	ValueGetValue :: proc(value: Value, theType: ValueType, valuePtr: rawptr) -> bool ---
 
-getApplicationPids :: proc(pids: ^[posix.pid_t]struct{}) -> bool {
-	if !IsProcessTrusted() do return false
-
-	options := WindowListOption(
-		kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
-	)
-	window_list := WindowListCopyWindowInfo(options, kCGNullWindowID)
-	defer cf.ReleaseObject(window_list)
-
-	count := ArrayGetCount(window_list)
-	defer delete(processed_pids)
-
-	for i in 0 ..< count {
-		{
-			dict := ArrayGetValueAtIndex(window_list, i)
-			pid := dict->Dictionary_getInt(WindowOwnerPID) or_continue
-
-			if (pid in processed_pids) do continue
-
-			pids[pid] = {}
-		}
-	}
-
-	return true
-
-}
-
-getWindowRefsFromPid :: proc(pid: posix.pid_t, window_refs: ^[dynamic]AXUIElementRef) {
-	appAxUIEl := UIElementCreateApplication(pid)
-
-	windowAxUIElements: CF.Array
-	ax_error := UIElementCopyAttributeValue(appAxUIEl, WindowsAttribute, &windowAxUIElements)
-	if ax_error != AXError.kAXErrorSuccess do return
-
-	windowsCount := CF.ArrayGetCount(windowAxUIElements)
-	for i in 0 ..< windowsCount {
-		append(window_refs, CF.ArrayGetValueAtIndex(windowAxUIElements, i))
-	}
+	@(link_name = "_AXUIElementGetWindow")
+	UIElementGetWindowID :: proc(element: UIElementRef, windowId: ^CG.WindowID) -> Error ---
 }
