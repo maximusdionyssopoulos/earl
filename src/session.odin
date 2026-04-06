@@ -1,18 +1,14 @@
 package earl
 
-import "base:runtime"
 import hm "core:container/handle_map"
-import "core:container/small_array"
-import "core:log"
 import "layer"
 
 
 SessionHandle :: hm.Handle16
 Session :: struct {
-	handle: SessionHandle,
-	layers: hm.Dynamic_Handle_Map(layer.Layer, layer.LayerHandle),
-	// layouts: hm.Dynamic_Handle_Map(Layout, LayoutHandle),
-	// screens: small_array.Small_Array(MAX_SCREENS, Screen),
+	handle:  SessionHandle,
+	layers:  hm.Dynamic_Handle_Map(layer.Layer, layer.LayerHandle),
+	layouts: hm.Dynamic_Handle_Map(layer.Layout, layer.LayoutHandle),
 }
 
 Session_gatherInitialWindowsAsLayers :: proc(manager: ^SessionManager, s_handle: SessionHandle) {
