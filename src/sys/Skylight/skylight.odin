@@ -24,22 +24,22 @@ SLRegisterNotifyProc :: proc "c" (
 	_connextion_id: i32,
 )
 
-@(default_calling_convention = "c")
+@(default_calling_convention = "c", link_prefix = "SLS")
 foreign SkyLight {
-	SLSMainConnectionID :: proc() -> SLConnectionID ---
-	SLSCopyManagedDisplaySpaces :: proc(cid: SLConnectionID) -> CF.Array ---
-	SLSGetActiveSpace :: proc(cid: SLConnectionID) -> u64 ---
-	SLSRegisterConnectionNotifyProc :: proc(cid: SLConnectionID, callback: SLRegisterNotifyProc, event: kCGSEvent, data: rawptr) -> i32 ---
-	SLSRemoveConnectionNotifyProc :: proc(cid: SLConnectionID, callback: SLRegisterNotifyProc, event: kCGSEvent) -> i32 ---
-	SLSWindowQueryWindows :: proc(cid: SLConnectionID, windows: CF.Array, count: i32) -> WindowQuery ---
-	SLSWindowQueryResultCopyWindows :: proc(query: WindowQuery) -> WindowIterator ---
-	SLSWindowIteratorGetCount :: proc(iterator: WindowIterator) -> uint ---
-	SLSWindowIteratorAdvance :: proc(iterator: WindowIterator) -> bool ---
-	SLSWindowIteratorGetWindowID :: proc(iterator: WindowIterator) -> CG.WindowID ---
-	SLSWindowIteratorGetPID :: proc(iterator: WindowIterator) -> uint ---
-	SLSWindowIteratorGetLevel :: proc(iterator: WindowIterator) -> uint ---
-	SLSWindowIteratorGetAttributes :: proc(iterator: WindowIterator) -> u64 ---
-	SLSWindowIteratorGetParentID :: proc(iterator: WindowIterator) -> u32 ---
+	MainConnectionID :: proc() -> SLConnectionID ---
+	CopyManagedDisplaySpaces :: proc(cid: SLConnectionID) -> CF.Array ---
+	GetActiveSpace :: proc(cid: SLConnectionID) -> u64 ---
+	RegisterConnectionNotifyProc :: proc(cid: SLConnectionID, callback: SLRegisterNotifyProc, event: kCGSEvent, data: rawptr) -> i32 ---
+	RemoveConnectionNotifyProc :: proc(cid: SLConnectionID, callback: SLRegisterNotifyProc, event: kCGSEvent) -> i32 ---
+	WindowQueryWindows :: proc(cid: SLConnectionID, windows: CF.Array, count: i32) -> WindowQuery ---
+	WindowQueryResultCopyWindows :: proc(query: WindowQuery) -> WindowIterator ---
+	WindowIteratorGetCount :: proc(iterator: WindowIterator) -> uint ---
+	WindowIteratorAdvance :: proc(iterator: WindowIterator) -> bool ---
+	WindowIteratorGetWindowID :: proc(iterator: WindowIterator) -> CG.WindowID ---
+	WindowIteratorGetPID :: proc(iterator: WindowIterator) -> uint ---
+	WindowIteratorGetLevel :: proc(iterator: WindowIterator) -> uint ---
+	WindowIteratorGetAttributes :: proc(iterator: WindowIterator) -> u64 ---
+	WindowIteratorGetParentID :: proc(iterator: WindowIterator) -> u32 ---
 }
 
 SpaceID :: distinct u64

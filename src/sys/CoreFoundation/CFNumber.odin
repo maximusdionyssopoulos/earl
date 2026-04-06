@@ -33,6 +33,8 @@ Number_getOdinValue :: proc(number: Number, $T: typeid, value: ^T) -> bool {
 	type_enum: NumberType
 
 	switch typeid_of(T) {
+	case typeid_of(int):
+		type_enum = .IntType
 	case typeid_of(i8):
 		type_enum = .SInt8Type
 	case typeid_of(i16):

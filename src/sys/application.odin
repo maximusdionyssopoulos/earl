@@ -41,8 +41,12 @@ Application_gatherApplicationsAndWindows :: proc(
 	for i in 0 ..< count {
 		{
 			dict := CF.ArrayGetValueAtIndex(window_list, i)
-			pid := cast(posix.pid_t)CF.Dictionary_getInt(dict, CG.WindowOwnerPID) or_continue
-			layer := CF.Dictionary_getInt(dict, CG.WindowLayer) or_continue
+			pid := cast(posix.pid_t)CF.Dictionary_getNumber(
+				i32,
+				dict,
+				CG.WindowOwnerPID,
+			) or_continue
+			layer := CF.Dictionary_getNumber(i32, dict, CG.WindowLayer) or_continue
 			if layer != 0 do continue
 
 
