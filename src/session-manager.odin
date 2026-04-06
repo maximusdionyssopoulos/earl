@@ -1,29 +1,47 @@
 package earl
 import hm "core:container/handle_map"
+import "sys"
 
 MAX_SESSIONS :: 10
 
 SessionManager :: struct {
-	active_session: Handle,
-	sessions:       hm.Static_Handle_Map(MAX_SESSIONS + 1, Session, Handle), // zero value is reserved for sentinel : https://pkg.odin-lang.org/core/container/handle_map/#static_cap
-	screens:        [dynamic]ScreenUUID,
-	windows:        hm.Dynamic_Handle_Map(Window, WindowHandle),
+	active_session: SessionHandle,
+	sessions:       hm.Static_Handle_Map(MAX_SESSIONS + 1, Session, SessionHandle), // zero value is reserved for sentinel : https://pkg.odin-lang.org/core/container/handle_map/#static_cap
+	screens:        hm.Static_Handle_Map(sys.MAX_SCREENS, sys.Display, sys.DisplayHandle),
+	applications:   hm.Dynamic_Handle_Map(sys.Application, sys.ApplicationHandle),
 	_initialised:   bool,
 }
 
 Manager := SessionManager{}
 
-sessionManager_setActive :: proc(manager: ^SessionManager, handle: Handle) -> bool {
+SessionManager_setActiveSession :: proc(manager: ^SessionManager, handle: SessionHandle) -> bool {
 	hm.static_is_valid(manager.sessions, handle) or_return
 
 	manager.active_session = handle
 	return true
 }
 
+SessionManager_newSession :: proc(manager: ^SessionManager) -> (SessionHandle, bool) {
+	session := Session{}
 
-SessionManager_Error :: enum byte {
-	None = 0,
-	Already_Initialised = 1,
-	Window_Init_Error = 2,
-	Screens_Init_Error,
+	session_handle, ok := hm.add(&manager.sessions, session)
+
+	if !ok {
+		return {}, false
+	}
+
+	return session_handle, true
+}
+
+SessionManager_deleteSession :: proc(manager: ^SessionManager, handle: SessionHandle) -> bool {
+	hm.remove(&manager.sessions, handle) or_return
+
+	// we need to do something will all the layers and layouts the session
+	// possible just free them
+	// or maybe add them to thne new active session
+	//
+	// if the active session is deleted then... if no sessions create an empty one, else set the first session active
+	// perhaps ^ shouldn't be in this method but rather outside
+
+	return true
 }
