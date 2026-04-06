@@ -28,3 +28,10 @@ foreign CoreGraphics {
 	WindowLayer: CF.String
 	WindowNumber: CF.String
 }
+
+foreign import "system:ColorSync.framework"
+@(link_prefix = "CG", default_calling_convention = "c")
+foreign ColorSync {
+	DisplayCreateUUIDFromDisplayID :: proc(displayID: DirectDisplayID) -> CF.UUID ---
+	DisplayGetDisplayIDFromUUID :: proc(uuid: CF.UUID) -> DirectDisplayID ---
+}
