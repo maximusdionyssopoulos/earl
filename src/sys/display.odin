@@ -87,21 +87,25 @@ Display_gatherDisplays :: proc(
 		) or_continue
 
 
-		h, ok := handle_map.add(
-			displays,
-			Display {
-				display_uuid = DisplayUUID(display_uuid),
-				direct_display_id = direct_display_id,
-				managed_space_id = SLS.SpaceID(managed_space_id),
-				space_uuid = space_uuid,
-			},
-		)
+		screen := Display_toNSScreen(&Display{direct_display_id = direct_display_id}) or_continue
+		frame, vframe, screen_size := Screen_readFrameData(screen)
+		display := Display {
+			display_uuid      = DisplayUUID(display_uuid),
+			direct_display_id = direct_display_id,
+			managed_space_id  = SLS.SpaceID(managed_space_id),
+			space_uuid        = space_uuid,
+			frame             = frame,
+			visible_frame     = vframe,
+			screen_size       = screen_size,
+		}
+
+
+		h, ok := handle_map.add(displays, display)
 	}
 }
 
-Display_cacheScreenInformation :: proc(
-	displays: ^handle_map.Static_Handle_Map(MAX_SCREENS, Display, DisplayHandle),
-) {
+
+Display_toNSScreen :: proc(display: ^Display) -> (screen: ^NS.Screen, ok: bool) {
 	screens := NS.Screen_screens()
 
 	for i in 0 ..< screens->count() {
@@ -111,15 +115,11 @@ Display_cacheScreenInformation :: proc(
 		str = NS.String_initWithOdinString(str, "NSScreenNumber")
 
 		number := cast(^NS.Number)dict->objectForKey(str)
-		display := Display_findWithDirectDisplayId(displays, number->u32Value()) or_continue
-		display.frame = screen->frame()
-		display.visible_frame = screen->visibleFrame()
-
-		screen_size := screen->visibleFrame()
-		screen_size.origin.y =
-			screen->frame().size.height - screen_size.origin.y - screen_size.size.height
-		display.screen_size = screen_size
+		if number->u32Value() == display.direct_display_id {
+			return screen, true
+		}
 	}
+	return nil, false
 }
 
 Display_findWithDirectDisplayId :: proc(
@@ -135,5 +135,27 @@ Display_findWithDirectDisplayId :: proc(
 			return d, true
 		}
 	}
+	return
+}
+
+Screen_readFrameData :: proc(
+	screen: ^NS.Screen,
+) -> (
+	frame: CF.Rect,
+	visible_frame: CF.Rect,
+	screen_size: CF.Rect,
+) {
+	dict := screen->deviceDescription()
+	str := NS.String_alloc()
+	str = NS.String_initWithOdinString(str, "NSScreenNumber")
+
+	number := cast(^NS.Number)dict->objectForKey(str)
+	frame = screen->frame()
+	visible_frame = screen->visibleFrame()
+
+	screen_size = screen->visibleFrame()
+	screen_size.origin.y =
+		screen->frame().size.height - screen_size.origin.y - screen_size.size.height
+
 	return
 }
