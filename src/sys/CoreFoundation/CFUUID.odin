@@ -7,6 +7,6 @@ UUID :: TypeRef
 @(link_prefix = "CF", default_calling_convention = "c")
 foreign CoreFoundation {
 	UUIDCreateFromString :: proc(allocator: Allocator, string: String) -> UUID ---
-	UUIDCreateFromBytes :: proc(allocator: Allocator, bytes: uuid.Identifier) -> UUID ---
+	UUIDCreateWithBytes :: proc(allocator: Allocator, bytes: uuid.Identifier) -> UUID ---
 	UUIDGetUUIDBytes :: proc(_uuid: UUID) -> uuid.Identifier ---
 }
