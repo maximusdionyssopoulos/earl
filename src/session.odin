@@ -17,20 +17,12 @@ Session_gatherInitialWindowsAsLayers :: proc(manager: ^SessionManager, s_handle:
 		panic("session not found")
 	}
 
-	app_iterator := hm.iterator_make(&manager.applications)
-	for a, ah in hm.iterate(&app_iterator) {
-		assert(hm.is_valid(&manager.applications, ah))
-		window_iterator := hm.iterator_make(&a.windows)
-		for w, wh in hm.iterate(&window_iterator) {
-			assert(hm.is_valid(&a.windows, wh))
-			layer_ptr := layer.Layer_new(layer.Window)
-			layer_ptr.sys_windowHandle = w.handle
+	window_iterator := hm.iterator_make(&manager.windows)
+	for w, wh in hm.iterate(&window_iterator) {
+		layer_ptr := layer.Layer_new(layer.Window)
+		layer_ptr.sys_windowHandle = w.handle
 
-			_, err := hm.add(&session.layers, layer_ptr)
-			if err != .None {
-				panic("failed to add layer to session")
-			}
-		}
+		_ = hm.add(&session.layers, layer_ptr) or_continue
 	}
 }
 

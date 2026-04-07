@@ -9,6 +9,7 @@ SessionManager :: struct {
 	sessions:       hm.Static_Handle_Map(MAX_SESSIONS + 1, Session, SessionHandle), // zero value is reserved for sentinel : https://pkg.odin-lang.org/core/container/handle_map/#static_cap
 	screens:        hm.Static_Handle_Map(sys.MAX_SCREENS, sys.Display, sys.DisplayHandle),
 	applications:   hm.Dynamic_Handle_Map(sys.Application, sys.ApplicationHandle),
+	windows:        hm.Dynamic_Handle_Map(sys.Window, sys.Window),
 	_initialised:   bool,
 }
 

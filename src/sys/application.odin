@@ -12,9 +12,8 @@ import NS "core:sys/darwin/Foundation"
 ApplicationHandle :: hm.Handle16
 
 Application :: struct {
-	handle:  ApplicationHandle,
-	pid:     posix.pid_t,
-	windows: hm.Dynamic_Handle_Map(Window, WindowHandle),
+	handle: ApplicationHandle,
+	pid:    posix.pid_t,
 }
 
 // ProcessSerialNumber :: struct {
@@ -25,7 +24,7 @@ Application :: struct {
 
 // maybe investigate using carbon or ns running applications instead here
 //
-Application_gatherApplicationsAndWindows :: proc(
+Application_gatherApplications :: proc(
 	applications: ^hm.Dynamic_Handle_Map(Application, ApplicationHandle),
 ) -> bool {
 	options := CG.WindowListOption(
@@ -68,14 +67,16 @@ Application_gatherApplicationsAndWindows :: proc(
 			}
 
 			app.handle = handle
-			Application_gatherWindows(&app)
 		}
 	}
 
 	return true
 }
 
-Application_gatherWindows :: proc(app: ^Application) {
+Application_gatherWindows :: proc(
+	app: ^Application,
+	windows: ^hm.Dynamic_Handle_Map(Window, WindowHandle),
+) {
 
 	appAxUIEl := AX.UIElementCreateApplication(app.pid)
 
@@ -95,16 +96,12 @@ Application_gatherWindows :: proc(app: ^Application) {
 
 		id: CG.WindowID
 		ax_err := AX.UIElementGetWindowID(window.ref, &id)
-		if ax_err != AX.Error.ErrorSuccess {
-			panic("Error gathering the inital windows")
-		}
+		if ax_err == AX.Error.ErrorSuccess do continue
+
 		window.window_id = id
 		window.application = app.handle
 
-		handle, err := hm.add(&app.windows, window)
-		if err != .None {
-			panic("Error gathering the inital windows")
-		}
+		handle := hm.add(windows, window) or_continue
 		window.handle = handle
 	}
 }
