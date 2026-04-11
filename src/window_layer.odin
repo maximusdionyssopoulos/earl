@@ -1,24 +1,23 @@
-package layer
+package earl
 
-import CF "../sys/CoreFoundation"
-import "../sys"
+import CF "sys/CoreFoundation"
 
 
-WindowHandle :: LayerHandle
+WindowLayerHandle :: LayerHandle
 
-Window :: struct {
+WindowLayer :: struct {
 	using layer:      Layer,
-	sys_windowHandle: sys.WindowHandle,
+	sys_windowHandle: WindowHandle,
 }
 
 WindowDrawCall :: struct {
-	window: WindowHandle,
+	window: WindowLayerHandle,
 	rect:   CF.Rect,
 }
 
 @(private)
 window_appendDrawCall :: proc(
-	window_id: WindowHandle,
+	window_id: WindowLayerHandle,
 	rect: CF.Rect,
 	calls: ^[dynamic]WindowDrawCall,
 ) {

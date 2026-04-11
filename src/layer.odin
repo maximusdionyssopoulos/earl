@@ -1,8 +1,8 @@
-package layer
+package earl
 
 import hm "core:container/handle_map"
 
-import CF "../sys/CoreFoundation"
+import CF "/sys/CoreFoundation"
 
 
 LayerHandle :: hm.Handle16
@@ -12,7 +12,7 @@ Layer :: struct {
 	// _previous: LayerHandle,
 	variant: union {
 		^Split,
-		^Window,
+		^WindowLayer,
 	},
 }
 
@@ -33,7 +33,7 @@ layer_tile :: proc(layer: ^Layer) {
 
 Layer_computeLayout :: proc(calls: ^[dynamic]WindowDrawCall, layer: ^Layer, rect: CF.Rect) {
 	switch l in layer.variant {
-	case ^Window:
+	case ^WindowLayer:
 		window_appendDrawCall(l.handle, rect, calls)
 	case ^Split:
 		split_computeRectangles(l, rect, calls)

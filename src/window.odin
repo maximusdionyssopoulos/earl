@@ -1,12 +1,12 @@
-package sys
+package earl
 
 import hm "core:container/handle_map"
+import "core:sys/posix"
 
-import ax "ApplicationServices"
-import AX "ApplicationServices"
-import CF "CoreFoundation"
-import CG "CoreGraphics"
-import SLS "Skylight"
+import AX "sys/ApplicationServices"
+import CF "sys/CoreFoundation"
+import CG "sys/CoreGraphics"
+import SLS "sys/Skylight"
 
 WindowHandle :: hm.Handle32
 
@@ -14,17 +14,18 @@ Window :: struct {
 	handle:           WindowHandle,
 	application:      ApplicationHandle,
 	current_space_id: Maybe(SLS.SpaceID),
-	variant:          union {
-		^SingleWindow,
-		^NativeTabbedWindow,
-	},
+	variant:          WindowKind,
+}
+WindowKind :: union {
+	^SingleWindow,
+	^NativeTabbedWindow,
 }
 
 SingleWindow :: struct {
 	using window: Window,
 	// the skylight/ coregraphics id
 	window_id:    CG.WindowID,
-	ref:          ax.UIElementRef,
+	ref:          AX.UIElementRef,
 }
 
 NativeTabbedWindow :: struct {
@@ -39,7 +40,7 @@ TabHandle :: hm.Handle16
 Tab :: struct {
 	handle:    TabHandle,
 	window_id: CG.WindowID,
-	ref:       ax.UIElementRef,
+	ref:       AX.UIElementRef,
 }
 
 Window_new :: proc($T: typeid) -> ^T {
@@ -71,7 +72,7 @@ Window_move :: proc(window: ^Window, rect: CF.Rect) -> bool {
 	return true
 }
 
-Window_getAxUIElementRef := proc(window: ^Window) -> (ref: AX.UIElementRef, ok: bool) {
+Window_getAxUIElementRef :: proc(window: ^Window) -> (ref: AX.UIElementRef, ok: bool) {
 	switch w in window.variant {
 	case ^SingleWindow:
 		ref = w.ref
@@ -81,3 +82,36 @@ Window_getAxUIElementRef := proc(window: ^Window) -> (ref: AX.UIElementRef, ok: 
 	}
 	return
 }
+
+// Window_byCGWindowID :: proc(
+// 	windows: ^hm.Dynamic_Handle_Map(Window, WindowHandle),
+// 	window_id: CG.WindowID,
+// ) -> (
+// 	^Window,
+// 	bool,
+// ) {
+// 	it := hm.iterator_make(windows)
+// 	for window, _ in hm.iterate(&it) {
+// 		switch v in window.variant {
+// 		case ^SingleWindow:
+// 			if v.window_id == window_id {
+// 				return window, true
+// 			}
+// 		case ^NativeTabbedWindow:
+// 			tab_it := hm.iterator_make(&v.tabs)
+// 			for tab, _ in hm.iterate(&tab_it) {
+// 				if tab.window_id == window_id {
+// 					return window, true
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return nil, false
+// }
+
+//
+// heuristic will probs be based on: https://github.com/karinushka/paneru/commit/5a3c72a016f3e70b555af29a0464cd477a1d7c35
+// and https://github.com/acsandmann/rift/issues/36
+// Window_hueristicGetType :: proc() -> WindowKind {
+
+// }

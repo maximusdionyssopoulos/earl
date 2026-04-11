@@ -1,16 +1,28 @@
-package sys
+package earl
 
-import AX "ApplicationServices"
-import CF "CoreFoundation"
-import CG "CoreGraphics"
 import hm "core:container/handle_map"
-import "core:fmt"
 import "core:sys/posix"
+import AX "sys/ApplicationServices"
+import CF "sys/CoreFoundation"
+import CG "sys/CoreGraphics"
 
 import NS "core:sys/darwin/Foundation"
 
 ApplicationHandle :: hm.Handle16
 
+// I'm thinking of refactoring the application and window data structures
+// basically instead of apps owning windows which models how it works from a domain pov
+// each window will have a handle to a app
+// an app doesn't know its windows -> don't think this operation will happen very often so the O(N) lookup is fine
+//
+// and the windows are stored like [cgwindowid]Window as a map
+// this allows for easier lookup since a majority of callbacks and actions give the cgwindowid i think
+//
+// the problem is that it doesn't quite work for tabs so i need to think about this more
+// native tabs destroy their window when you switch tab
+// so the heuristic was an attempt to stop destroying and recreating and instead modeling the world
+// in such a way where we know about this and can easily see all the tabs and which one is front
+// but the map doesn't allow us to model this easily
 Application :: struct {
 	handle: ApplicationHandle,
 	pid:    posix.pid_t,

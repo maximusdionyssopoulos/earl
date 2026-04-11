@@ -1,8 +1,8 @@
-package sys
+package earl
 
-import CF "CoreFoundation"
-import CG "CoreGraphics"
-import SLS "Skylight"
+import CF "sys/CoreFoundation"
+import CG "sys/CoreGraphics"
+import SLS "sys/Skylight"
 
 import "core:container/handle_map"
 import "core:encoding/uuid"

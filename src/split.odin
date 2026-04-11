@@ -1,6 +1,6 @@
-package layer
+package earl
 
-import CF "../sys/CoreFoundation"
+import CF "/sys/CoreFoundation"
 
 
 SplitHandle :: LayerHandle

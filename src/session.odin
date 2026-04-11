@@ -1,30 +1,29 @@
 package earl
 
 import hm "core:container/handle_map"
-import "layer"
-
 
 SessionHandle :: hm.Handle16
 Session :: struct {
 	handle:  SessionHandle,
-	layers:  hm.Dynamic_Handle_Map(layer.Layer, layer.LayerHandle),
-	layouts: hm.Dynamic_Handle_Map(layer.Layout, layer.LayoutHandle),
+	layers:  hm.Dynamic_Handle_Map(Layer, LayerHandle),
+	layouts: hm.Dynamic_Handle_Map(Layout, LayoutHandle),
+	// state: []
 }
 
-Session_gatherInitialWindowsAsLayers :: proc(manager: ^SessionManager, s_handle: SessionHandle) {
-	session, ok := hm.get(&manager.sessions, s_handle)
-	if !ok {
-		panic("session not found")
-	}
+// Session_gatherInitialWindowsAsLayers :: proc(manager: ^SessionManager, s_handle: SessionHandle) {
+// 	session, ok := hm.get(&manager.sessions, s_handle)
+// 	if !ok {
+// 		panic("session not found")
+// 	}
 
-	window_iterator := hm.iterator_make(&manager.windows)
-	for w, wh in hm.iterate(&window_iterator) {
-		layer_ptr := layer.Layer_new(layer.Window)
-		layer_ptr.sys_windowHandle = w.handle
+// 	window_iterator := hm.iterator_make(&manager.windows)
+// 	for w, wh in hm.iterate(&window_iterator) {
+// 		layer_ptr := layer.Layer_new(layer.Window)
+// 		layer_ptr.sys_windowHandle = w.handle
 
-		_ = hm.add(&session.layers, layer_ptr) or_continue
-	}
-}
+// 		_ = hm.add(&session.layers, layer_ptr) or_continue
+// 	}
+// }
 
 
 // session_newSplit :: proc(
