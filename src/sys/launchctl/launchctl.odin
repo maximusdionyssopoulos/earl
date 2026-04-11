@@ -31,9 +31,9 @@ plistPath :: proc(ser: Service) -> string {
 	return fmt.aprintf("~/Library/LaunchAgents/%s.plist", ser.name)
 }
 
-bootstrap :: proc(ser: Service, plist_path: string) {
+bootstrap :: proc(ser: Service) {
 	desc := os.Process_Desc {
-		command = []string{LAUNCH_CTL, "bootstrap", domainTarget(ser), plist_path},
+		command = []string{LAUNCH_CTL, "bootstrap", domainTarget(ser), plistPath(ser)},
 	}
 	state, _, _, err := os.process_exec(desc, context.temp_allocator)
 }
