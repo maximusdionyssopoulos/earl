@@ -3,16 +3,27 @@ import hm "core:container/handle_map"
 
 MAX_SESSIONS :: 10
 
+
 SessionManager :: struct {
 	active_session: SessionHandle,
 	sessions:       hm.Static_Handle_Map(MAX_SESSIONS + 1, Session, SessionHandle), // zero value is reserved for sentinel : https://pkg.odin-lang.org/core/container/handle_map/#static_cap
-	screens:        hm.Static_Handle_Map(MAX_SCREENS, Display, DisplayHandle),
+	displays:       hm.Static_Handle_Map(MAX_SCREENS, Display, DisplayHandle),
 	applications:   hm.Dynamic_Handle_Map(Application, ApplicationHandle),
 	windows:        hm.Dynamic_Handle_Map(Window, WindowHandle),
-	_initialised:   bool,
+	events:         EventQueue,
 }
 
-Manager := SessionManager{}
+SessionManager_init :: proc(manager: ^SessionManager) -> bool {
+	// I think giving the event queue a capacity should be ok, not really sure.
+	EventQueue_init(&manager.events, 256, context.allocator)
+	hm.dynamic_init(&manager.applications, context.allocator)
+	hm.dynamic_init(&manager.windows, context.allocator)
+
+	active_session_handle := SessionManager_newSession(manager) or_return
+	SessionManager_setActiveSession(manager, active_session_handle)
+
+	return true
+}
 
 SessionManager_setActiveSession :: proc(manager: ^SessionManager, handle: SessionHandle) -> bool {
 	hm.static_is_valid(manager.sessions, handle) or_return
