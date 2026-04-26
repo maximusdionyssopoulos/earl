@@ -10,20 +10,10 @@ Session :: struct {
 	// state: []
 }
 
-// Session_gatherInitialWindowsAsLayers :: proc(manager: ^SessionManager, s_handle: SessionHandle) {
-// 	session, ok := hm.get(&manager.sessions, s_handle)
-// 	if !ok {
-// 		panic("session not found")
-// 	}
-
-// 	window_iterator := hm.iterator_make(&manager.windows)
-// 	for w, wh in hm.iterate(&window_iterator) {
-// 		layer_ptr := layer.Layer_new(layer.Window)
-// 		layer_ptr.sys_windowHandle = w.handle
-
-// 		_ = hm.add(&session.layers, layer_ptr) or_continue
-// 	}
-// }
+Session_init :: proc(session: ^Session, windows: ^hm.Dynamic_Handle_Map(Window, WindowHandle)) {
+	hm.dynamic_init(&session.layers, context.allocator)
+	hm.dynamic_init(&session.layouts, context.allocator)
+}
 
 
 // session_newSplit :: proc(
