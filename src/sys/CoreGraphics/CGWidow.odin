@@ -27,6 +27,8 @@ foreign CoreGraphics {
 	WindowName: CF.String
 	WindowLayer: CF.String
 	WindowNumber: CF.String
+	WindowStoreType: CF.String
+	WindowIsOnscreen: CF.String
 }
 
 foreign import "system:ColorSync.framework"
