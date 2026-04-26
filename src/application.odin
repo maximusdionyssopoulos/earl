@@ -108,7 +108,7 @@ Application_gatherWindows :: proc(
 
 		id: CG.WindowID
 		ax_err := AX.UIElementGetWindowID(window.ref, &id)
-		if ax_err == AX.Error.ErrorSuccess do continue
+		if ax_err != AX.Error.ErrorSuccess do continue
 
 		window.window_id = id
 		window.application = app.handle
