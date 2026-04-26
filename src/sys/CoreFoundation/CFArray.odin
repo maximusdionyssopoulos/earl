@@ -7,5 +7,5 @@ Array :: TypeRef
 foreign CoreFoundation {
 	ArrayGetCount :: proc(theArray: Array) -> Index ---
 	ArrayGetValueAtIndex :: proc(theArray: Array, idx: Index) -> TypeRef ---
-	ArrayCreate :: proc(allocator: Allocator, values: rawptr, numValues: Index) -> Array ---
+	ArrayCreate :: proc(allocator: Allocator, values: rawptr, numValues: Index, callbacks: rawptr) -> Array ---
 }

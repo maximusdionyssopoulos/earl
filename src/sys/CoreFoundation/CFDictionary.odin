@@ -1,5 +1,6 @@
 package CFoundation
 
+import "core:fmt"
 foreign import CoreFoundation "system:CoreFoundation.framework"
 
 Dictionary :: TypeRef
@@ -34,4 +35,16 @@ Dictionary_getString :: proc(dict: Dictionary, key: String) -> (string, bool) {
 	}
 
 	return StringCopyToOdinString(cast(String)val_ptr)
+}
+
+Dictionary_getBool :: proc(dict: Dictionary, key: String) -> (bool, bool) {
+	val_ptr: TypeRef
+
+	if !DictionaryGetValueIfPresent(dict, rawptr(key), &val_ptr) {
+		return false, false
+	}
+
+
+	return BooleanGetValue(val_ptr), true
+	// return Number_getOdinValue(cast(TypeRef)val_ptr, bool, nil), true
 }

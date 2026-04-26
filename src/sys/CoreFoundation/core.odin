@@ -4,6 +4,7 @@ import cf "core:sys/darwin/CoreFoundation"
 
 TypeRef :: cf.TypeRef
 ReleaseObject :: cf.ReleaseObject
+Release :: cf.Release
 Index :: cf.Index
 
 Point :: cf.CGPoint
