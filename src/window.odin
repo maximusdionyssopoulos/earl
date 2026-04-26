@@ -14,13 +14,11 @@ Window :: struct {
 	handle:           WindowHandle,
 	application:      ApplicationHandle,
 	current_space_id: Maybe(SLS.SpaceID),
-	variant:          WindowKind,
+	variant:          union {
+		^SingleWindow,
+		^NativeTabbedWindow,
+	},
 }
-WindowKind :: union {
-	^SingleWindow,
-	^NativeTabbedWindow,
-}
-
 SingleWindow :: struct {
 	using window: Window,
 	// the skylight/ coregraphics id
@@ -41,6 +39,12 @@ Tab :: struct {
 	handle:    TabHandle,
 	window_id: CG.WindowID,
 	ref:       AX.UIElementRef,
+}
+
+WindowKind :: enum {
+	SingleWindow,
+	NativeTabbedWindow,
+	System_Or_IgnoredWindow,
 }
 
 Window_new :: proc($T: typeid) -> ^T {
