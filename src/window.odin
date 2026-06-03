@@ -1,6 +1,7 @@
 package earl
 
 import hm "core:container/handle_map"
+import "core:fmt"
 import "core:sys/posix"
 
 import AX "sys/ApplicationServices"
@@ -270,4 +271,15 @@ Window_getFrame :: proc(w_id: CG.WindowID) -> (frame: CF.Rect, err: CG.Error) {
 		return frame, err
 	}
 	return frame, nil
+}
+
+Window_getApplicaton :: proc(
+	applications: ^Applications,
+	wid: CG.WindowID,
+) -> (
+	^Application,
+	bool,
+) {
+	w_info := Window_queryInformation(wid, []SLS.WindowQueryIteratorTraits{.PID})
+	return Application_findByPid(applications, cast(posix.pid_t)w_info.pid)
 }

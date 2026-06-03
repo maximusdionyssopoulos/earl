@@ -7,6 +7,7 @@ import CF "../CoreFoundation"
 import CG "../CoreGraphics"
 
 UIElementRef :: CF.TypeRef
+ObserverRef :: distinct CF.TypeRef
 Value :: CF.TypeRef
 
 Error :: enum i32 {

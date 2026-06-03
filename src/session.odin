@@ -3,16 +3,33 @@ package earl
 import hm "core:container/handle_map"
 
 SessionHandle :: hm.Handle16
+
+Layers :: hm.Dynamic_Handle_Map(Layer, LayerHandle)
+Layouts :: hm.Dynamic_Handle_Map(Layout, LayoutHandle)
+
 Session :: struct {
 	handle:  SessionHandle,
-	layers:  hm.Dynamic_Handle_Map(Layer, LayerHandle),
-	layouts: hm.Dynamic_Handle_Map(Layout, LayoutHandle),
-	// state: []
+	layers:  Layers,
+	layouts: Layouts,
 }
 
 Session_init :: proc(session: ^Session, windows: ^hm.Dynamic_Handle_Map(Window, WindowHandle)) {
 	hm.dynamic_init(&session.layers, context.allocator)
 	hm.dynamic_init(&session.layouts, context.allocator)
+}
+
+ActiveSession_addWindow :: proc(manager: ^SessionManager, window: ^Window) -> bool {
+	session := hm.get(&manager.sessions, manager.active_session) or_return
+	w_layer := new(WindowLayer)
+	w_layer.sys_windowHandle = window.handle
+
+	if h, err := hm.add(&session.layers, w_layer); err == nil {
+		w_layer.handle = h
+		return true
+	}
+
+	free(w_layer)
+	return false
 }
 
 

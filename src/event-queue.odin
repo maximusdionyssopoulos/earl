@@ -1,30 +1,7 @@
 package earl
 
-import "core:fmt"
-import "core:sys/posix"
-import "core:thread"
-
 import "base:runtime"
-
 import "core:sync"
-import CG "sys/CoreGraphics"
-import SLS "sys/Skylight"
-
-/*
-
-Defines the event types and the MPSC Event Queue
-An abstraction over the core system events.
-
-*/
-
-
-Event :: union {
-	WindowCreatedEvent,
-	WindowDestroyedEvent,
-}
-WindowCreatedEvent :: distinct SLS.SpaceWindowPayload
-
-WindowDestroyedEvent :: distinct SLS.SpaceWindowPayload
 
 // This is adapted from the odin mpsc https://github.com/odin-lang/Odin/blob/master/core/nbio/mpsc.odin
 EventQueue :: struct {
@@ -93,35 +70,4 @@ EventQueue_peek :: proc(mpscq: ^EventQueue) -> ^Event {
 		return nil
 	}
 	return mpscq.buffer[mpscq.tail]
-}
-
-
-// Creates and starts the event loop thread,
-// returns the thread
-Events_startThread :: proc(manager: ^SessionManager) -> ^thread.Thread {
-	return thread.create_and_start_with_poly_data(manager, EventQueue_handle)
-}
-
-// drain the queue, and process an event
-// sits idle waiting for messages
-EventQueue_handle :: proc(manager: ^SessionManager) {
-	queue := &manager.events
-
-	for {
-		if EventQueue_count(queue) == 0 {
-			continue
-		}
-		event := EventQueue_dequeue(queue)
-		if event == nil do continue
-		defer free(event)
-
-		switch e in event {
-		case WindowCreatedEvent:
-
-		case WindowDestroyedEvent:
-
-		}
-	}
-
-
 }

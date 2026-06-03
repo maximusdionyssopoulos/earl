@@ -33,7 +33,7 @@ App_startDaemon :: proc() {
 	state, _ := App_initState()
 
 	App_setupCallbacks(state)
-	Events_startThread(state)
+	Event_startConsumer(state)
 	App_startListening()
 
 	app->run()

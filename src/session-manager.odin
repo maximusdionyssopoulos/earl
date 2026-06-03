@@ -4,12 +4,15 @@ import hm "core:container/handle_map"
 MAX_SESSIONS :: 10
 
 
+Applications :: hm.Dynamic_Handle_Map(Application, ApplicationHandle)
+Windows :: hm.Dynamic_Handle_Map(Window, WindowHandle)
+
 SessionManager :: struct {
 	active_session: SessionHandle,
 	sessions:       hm.Static_Handle_Map(MAX_SESSIONS + 1, Session, SessionHandle), // zero value is reserved for sentinel : https://pkg.odin-lang.org/core/container/handle_map/#static_cap
 	displays:       hm.Static_Handle_Map(MAX_SCREENS, Display, DisplayHandle),
-	applications:   hm.Dynamic_Handle_Map(Application, ApplicationHandle),
-	windows:        hm.Dynamic_Handle_Map(Window, WindowHandle),
+	applications:   Applications,
+	windows:        Windows,
 	events:         EventQueue,
 }
 
@@ -55,4 +58,12 @@ SessionManager_deleteSession :: proc(manager: ^SessionManager, handle: SessionHa
 	// perhaps ^ shouldn't be in this method but rather outside
 
 	return true
+}
+
+SessionManager_addWindow :: proc(manager: ^SessionManager, window: ^Window) -> bool {
+	if h, err := hm.add(&manager.windows, window^); err == nil {
+		window.handle = h
+		return true
+	}
+	return false
 }

@@ -36,7 +36,7 @@ Sessions are most similar to tmux sessions. The idea here is a session is a coll
 - [x] update split
 - [ ] implement window lifecycle callback: onOpened, onClosed, onResized
 - [ ] implement hotkeys
-- [ ] launch init session manager and put every window on a layer
+- [x] launch init session manager and put every window on a layer
 - [ ] go to layout - via keyboard
 - [ ] test updating splits
 - [ ] fork split
@@ -51,5 +51,3 @@ Sessions are most similar to tmux sessions. The idea here is a session is a coll
 - [ ] Allow layouts to be defined in config
 - [ ] allow resizing split children
 - [ ] CLI
-
-
